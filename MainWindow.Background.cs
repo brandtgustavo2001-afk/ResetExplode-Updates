@@ -54,15 +54,16 @@ public partial class MainWindow
     public void ExitFromTray() { _exitRequested = true; Close(); }
     public void StartInBackground()
     {
-        // Let Loaded initialize collectors and updates while the first frame remains invisible.
-        Opacity = 0; ShowActivated = false; ShowInTaskbar = false;
+        // A zero-opacity WPF window may never render/raise Loaded on some desktops.
+        // Keep Loaded reliable so the background update timer always starts.
+        ShowActivated = false; ShowInTaskbar = false;
         RoutedEventHandler? loaded = null;
         loaded = (_, _) =>
         {
             Loaded -= loaded;
             Dispatcher.BeginInvoke(new Action(() =>
             {
-                if (_trayIcon?.Available == true) { HideToTray(); Opacity = 1; }
+                if (_trayIcon?.Available == true) HideToTray();
                 else RestoreFromTray(); // Never leave an unreachable process if Explorer has no tray.
             }), DispatcherPriority.Background);
         };

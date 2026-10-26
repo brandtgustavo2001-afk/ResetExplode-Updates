@@ -117,11 +117,13 @@ public static class AutoUpdater
         foreach (var arg in new[] { "--apply-update", Environment.ProcessId.ToString(), update.ManifestPath,
             update.InstallerPath, AppContext.BaseDirectory }) start.ArgumentList.Add(arg);
         Process.Start(start);
+        AppDiagnostics.Log($"Atualizador: helper iniciado para aplicar {update.Package.Version} apos o processo {Environment.ProcessId} encerrar.");
     }
 
     public static async Task ApplyAsync(string[] args)
     {
         if (args.Length != 5) throw new InvalidDataException("Argumentos da atualização inválidos.");
+        AppDiagnostics.Log("Atualizador: helper iniciado; aguardando aplicativo encerrar.");
         try
         {
             using var parent = Process.GetProcessById(int.Parse(args[1]));
@@ -143,6 +145,7 @@ public static class AutoUpdater
         foreach (var arg in new[] { "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-", "/DIR=" + Path.GetFullPath(args[4]), "/LOG=" + Path.Combine(Cache, "install.log") })
             start.ArgumentList.Add(arg);
         using var installer = Process.Start(start) ?? throw new IOException("Não foi possível abrir a atualização.");
+        AppDiagnostics.Log($"Atualizador: instalador {package.Version} iniciado.");
         await installer.WaitForExitAsync();
         if (installer.ExitCode is not (0 or 3010)) throw new IOException("Atualização interrompida. Código " + installer.ExitCode);
         if (!Version.TryParse(FileVersionInfo.GetVersionInfo(installedFile).FileVersion, out var completedVersion)

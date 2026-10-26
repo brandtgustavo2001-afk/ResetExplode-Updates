@@ -18,6 +18,7 @@ public partial class MainWindow
         _updateTimer.Tick += async (_, _) => { if (_settings.AutomaticUpdates) await CheckUpdatesAsync(); };
         Loaded += async (_, _) =>
         {
+            AppDiagnostics.Log("Atualizador: janela carregada; verificacao inicial em 20 segundos.");
             _updateTimer.Start();
             try { await Task.Delay(TimeSpan.FromSeconds(20), _updateCancellation.Token); }
             catch (OperationCanceledException) { return; }
@@ -36,12 +37,14 @@ public partial class MainWindow
     {
         if (_checkingUpdate || _closed) return;
         _checkingUpdate = true; BtnCheckUpdates.IsEnabled = false;
+        AppDiagnostics.Log("Atualizador: iniciando verificacao do canal v2.");
         try
         {
             var progress = new Progress<string>(text => { if (!_closed) UpdateStatus.Text = text; });
             var update = await Task.Run(() => AutoUpdater.PrepareAsync(text => ((IProgress<string>)progress).Report(text), _updateCancellation.Token));
             if (_closed) return;
             _preparedUpdate = update;
+            AppDiagnostics.Log(update == null ? "Atualizador: nenhuma versao superior disponivel." : $"Atualizador: {update.Package.Version} validada e pronta para aplicar ao encerrar.");
             BtnApplyUpdate.IsEnabled = update != null;
         }
         catch (OperationCanceledException) { }
