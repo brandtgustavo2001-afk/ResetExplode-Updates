@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="UpdaterProgram.cs" />
+    <Compile Include="../AutoUpdater.cs" Link="AutoUpdater.cs" />
+    <Compile Include="../UpdateTrust.cs" Link="UpdateTrust.cs" />
+    <Compile Include="../AppDiagnostics.cs" Link="AppDiagnostics.cs" />
+  </ItemGroup>
+</Project>

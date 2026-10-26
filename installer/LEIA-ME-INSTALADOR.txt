@@ -1,0 +1,57 @@
+RESET EXPLODE - INSTALADOR COMPLETO / CANAL DE ATUALIZACOES V2
+
+Migracao da 0.16.8 ou anterior: execute uma vez este instalador, sem desinstalar antes.
+A chave antiga de atualizacao nao pode mais assinar novas versoes. Este pacote
+configura a nova chave publica e preserva configuracoes e historico de energia.
+As proximas atualizacoes assinadas pelo canal v2 serao baixadas pelo aplicativo.
+O manifesto antigo continua disponivel para as instalacoes que ainda nao migraram.
+
+Compatibilidade: Windows 10 versão 1809 ou superior / Windows 11, em PC x64.
+
+O instalador inclui o aplicativo com .NET 8 embutido, bibliotecas de hardware e gráficos, Microsoft Visual C++ x64 e o instalador oficial PawnIO 2.2.0. Não precisa de internet para instalar estes componentes. Componentes já instalados são preservados.
+
+Execute o instalador e aceite a solicitação de administrador. Ele cria atalhos e uma entrada de desinstalação nos Aplicativos do Windows. Se solicitado, reinicie o computador para concluir a instalação do driver de sensores.
+
+Os drivers seriais CH340, CP210x, FTDI e Arduino já estão embutidos no programa e podem ser instalados pela aba RESET MAKER quando necessários ao seu equipamento.
+
+Integrações opcionais dependem dos respectivos programas e equipamentos: por exemplo, Corsair iCUE e seu SDK para iluminação Corsair, Steam para jogos Steam e drivers de vídeo do fabricante. Essas ferramentas não são necessárias para abrir o RESET EXPLODE. O SDK Corsair pode ser obtido pela própria aba de integração. Recursos que consultam serviços online ou baixam outros aplicativos precisam de internet e, quando indicado pelo programa, do winget (Instalador de Aplicativo da Microsoft).
+
+O programa solicita administrador para acessar os sensores. A disponibilidade de temperatura, consumo e benchmarks depende do suporte do hardware e de seus drivers.
+
+Ao desinstalar RESET EXPLODE, PawnIO e Visual C++ são mantidos por serem componentes compartilhados. Suas configurações em %AppData%\ResetExplode também são preservadas.
+
+Este instalador foi gerado localmente a partir do código fornecido. O instalador RESET EXPLODE não possui assinatura digital. Os instaladores oficiais PawnIO e Microsoft Visual C++ incluídos tiveram suas assinaturas verificadas durante a geração.
+
+CORREÇÕES DA VERSÃO 0.16.1
+- Corrigido o fechamento ao somar discos locais com unidades de rede/cloud que informam capacidades enormes.
+- Configurações antigas/incompletas são normalizadas. O salvamento usa arquivo temporário e cópia de recuperação.
+- Falhas de sensores são isoladas e registradas; valores NaN/infinito não são usados nos gráficos.
+- Testes concorrentes são bloqueados e erros nos workers/benchmarks recebem tratamento.
+- Arquivos temporários dos benchmarks ficam em pastas exclusivas de cada execução.
+- A janela inicial respeita a área útil da tela.
+- Falhas inesperadas geram aviso e diagnóstico em %LocalAppData%\ResetExplode\Logs\app.log. Os testes e as leituras automáticas são pausados; reabra o programa antes de retomar.
+
+Para atualizar: feche a versão anterior e execute ResetExplode-Setup-0.16.3-x64.exe. Não precisa desinstalar antes. O atalho passa a abrir a versão corrigida.
+
+OTIMIZAÇÕES DA VERSÃO 0.16.2
+- Leitura periódica de sensores e telemetria NVIDIA em segundo plano, sem bloquear cliques e rolagem.
+- Snapshots de sensores são aplicados na thread da interface. Leituras iguais não disparam notificações de redesenho.
+- As listas da GPU e a tabela agrupada de sensores usam virtualização para criar apenas as linhas próximas da área visível.
+- Uma atualização de hardware por vez, sem acúmulo de tarefas quando um driver demora.
+- Consultas ao histórico de erros do Windows em segundo plano, compartilhadas entre telas e reutilizadas por 60 segundos.
+- Carregamento de processos, programas de inicialização, dispositivos USB, drivers seriais e informações WMI em segundo plano.
+- Monitor de FPS iniciado quando a página de gargalo ou o overlay é utilizado. Páginas ocultas não recalculam os indicadores de gargalo.
+- Encerramento dos sensores/ETW fora da interface e watchdog para cancelar carga caso a coleta fique atrasada por mais de 5 segundos. A pausa intencional dos sensores durante benchmarks de GPU é respeitada.
+
+Não existe garantia de funcionamento de todos os sensores e testes em qualquer PC. A compatibilidade depende da versão do Windows, do hardware, das permissões e dos drivers. O teste de ray tracing exige suporte DXR 1.1. A versão é x64; não atende Windows de 32 bits, macOS ou Linux.
+
+CPU E OVERLAY - VERSÃO 0.16.3
+- Carga de CPU selecionável em 25%, 50%, 75% ou 100% por ciclo de trabalho, com limite de threads. O padrão passa a 50%. O percentual é um alvo de carga sintética, não uma garantia do uso total exibido pelo Windows.
+- O sensor usado aparece na tela. Distância ao TjMax não é usada como temperatura absoluta. Quando existem Tdie e Tctl separados, Tdie tem preferência.
+- O corte por temperatura continua ativo. O registro fornecido mostrou CPU reportando 100 °C com limite de 90 °C; o aplicativo interrompe essa condição. A redução de carga não corrige fisicamente problemas de refrigeração ou de potência.
+- Motivo da parada, valor e nome do sensor aparecem na tela e ficam registrados em %LocalAppData%\ResetExplode\Logs\app.log.
+- Overlay automático: ative o controle na aba Overlay. A janela só aparece com um jogo reconhecido em primeiro plano, e some ao usar Alt+Tab. Navegadores e launchers comuns são excluídos.
+- Jogos são identificados pela biblioteca instalada/pasta de jogo. Para títulos não detectados, adicione o executável real na seção de jogos manuais. O FPS depende de ETW; se não estiver disponível, os sensores continuam aparecendo sem inventar FPS.
+- O atalho global é verificado. Se Ctrl+Shift+O estiver ocupado na abertura, tenta Ctrl+Shift+F10 e informa o atalho efetivo. Clique no campo do atalho e pressione Ctrl, Alt ou Shift junto de outra tecla para personalizar. Conflitos são informados.
+- Personalização: fonte, tamanho, cor hexadecimal, transparência do fundo, borda, destaque do FPS, escala, canto, deslocamentos X/Y, intervalo de atualização, ordem de GPU/VRAM/CPU/RAM e seleção dos sensores. Use APLICAR E ATUALIZAR PRÉVIA para salvar a aparência. A prévia é ilustrativa e usa valores de exemplo.
+- A janela do overlay é externa ao jogo. Tela cheia sem bordas é o modo indicado; tela cheia exclusiva antiga pode impedir sua exibição. Não substitui toda a funcionalidade de MSI Afterburner/RTSS.

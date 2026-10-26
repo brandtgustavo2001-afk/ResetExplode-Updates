@@ -1,0 +1,43 @@
+name: Publicar atualizacao assinada
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versao numerica maior que a ultima publicada (ex.: 0.16.11)'
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: release-estavel
+  cancel-in-progress: false
+jobs:
+  publicar:
+    if: github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Validar versao e preparar ferramentas
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          if($env:RELEASE_VERSION -notmatch '^\d+\.\d+\.\d+$') { throw 'Versao invalida' }
+          ./installer/prepare-tools.ps1
+      - name: Testar, compilar e assinar manifesto
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          RESETEXPLODE_SIGNING_KEY_B64: ${{ secrets.RESETEXPLODE_SIGNING_KEY_B64 }}
+        run: |
+          if(!$env:RESETEXPLODE_SIGNING_KEY_B64) { throw 'Chave de assinatura ausente' }
+          ./installer/build-installer.ps1 -Version $env:RELEASE_VERSION -Dotnet (Get-Command dotnet).Source
+      - name: Verificar pacote publicado e liberar canal estavel
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: ./installer/publish-release.ps1 -Version $env:RELEASE_VERSION
