@@ -4,6 +4,19 @@ using System.Text;
 using System.Text.Json;
 using ResetExplode;
 
+if(args.FirstOrDefault() == "--live")
+{
+    var baseline=Version.Parse(args.Length > 1 ? args[1] : "0.16.9");
+    string liveCache=Path.Combine(Path.GetTempPath(),"ResetExplode-live-update-"+Guid.NewGuid().ToString("N"));
+    using var client=new HttpClient {Timeout=TimeSpan.FromMinutes(5)};
+    var prepared=await AutoUpdater.PrepareAsync(client,AutoUpdater.Source,liveCache,baseline,Console.WriteLine,CancellationToken.None);
+    if(prepared is null) { Console.WriteLine("PASS: canal sem versao superior a "+baseline);return; }
+    if(!AutoUpdater.VerifyPackage(prepared.InstallerPath,prepared.Package)) throw new Exception("Pacote publico invalido");
+    Console.WriteLine("PASS: canal publico, assinatura, download, SHA-256 e tamanho verificados: "+prepared.Package.Version);
+    Console.WriteLine("PREPARED_CACHE="+liveCache);
+    return;
+}
+
 using var signer = RSA.Create(2048);
 string key = Convert.ToBase64String(signer.ExportSubjectPublicKeyInfo());
 byte[] bytes = Encoding.UTF8.GetBytes("signed test installer bytes");
