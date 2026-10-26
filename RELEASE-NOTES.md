@@ -4,6 +4,8 @@ O overlay em janela agora usa texto compacto, alinhamento, cores por componente 
 
 Nao altera overclock, ventoinhas ou perfis do MSI/RTSS. Sensores externos nao alteram a protecao termica do stress. Mantidos assinatura de atualizacoes, historico de energia, bandeja e configuracoes.
 
+0.16.14: em computadores com duas GPUs de mesmo nome, mantem a coleta interna para evitar atribuir sensores de uma placa a outra. Inclui testes separados por projeto e previa visual reproduzivel. Total: 58 verificacoes automatizadas.
+
 IMPORTANTE PARA QUEM ESTA NA 0.16.8 OU ANTERIOR: a chave antiga de publicacao foi perdida. Execute este instalador UMA VEZ, sem desinstalar antes, para migrar a confianca para o canal v2. A 0.16.8 nao consegue fazer essa migracao sozinha. As proximas versoes assinadas pelo novo canal poderao ser baixadas pelo aplicativo. O manifesto antigo permanece disponivel para evitar erros nos clientes que ainda nao migraram.
 
 O teste de CPU inicia com rampa gradual e 25% por padrao, reduz carga antes do limite e interrompe se o sensor parar de responder. Mantidos overlay configuravel, bandeja, inicio em segundo plano e historico de energia.
