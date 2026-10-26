@@ -18,6 +18,7 @@ public partial class OverlayWindow : Window
     public static readonly DependencyProperty UseComponentColorsProperty = DependencyProperty.Register(nameof(UseComponentColors), typeof(bool), typeof(OverlayWindow), new PropertyMetadata(true));
     public bool UseComponentColors { get => (bool)GetValue(UseComponentColorsProperty); set => SetValue(UseComponentColorsProperty, value); }
     private double _offsetX = 12, _offsetY = 12;
+    private string _textColor="#F5F5F5";
 
     private IntPtr _hwnd, _hook;
     private IntPtr _monitor;                  // monitor do jogo (o da última janela ativa de outro programa)
@@ -57,6 +58,9 @@ public partial class OverlayWindow : Window
     public void ApplyAppearance(AppSettings settings)
     {
         UseComponentColors = settings.OverlayComponentColors;
+        _textColor=settings.OverlayColor;
+        OverlayTextRoot.SetValue(System.Windows.Documents.TextElement.FontWeightProperty,FontWeights.Bold);
+        OverlayTextRoot.Effect=new System.Windows.Media.Effects.DropShadowEffect {Color=Colors.Black,BlurRadius=2,ShadowDepth=1,Opacity=1};
         OverlayTextRoot.SetValue(System.Windows.Documents.TextElement.FontFamilyProperty, new FontFamily(settings.OverlayFont));
         OverlayTextRoot.SetValue(System.Windows.Documents.TextElement.FontSizeProperty, settings.OverlayFontSize);
         OverlayTextRoot.SetValue(System.Windows.Documents.TextElement.ForegroundProperty,
@@ -148,7 +152,9 @@ public partial class OverlayWindow : Window
         OGame.Visibility = V(foot.Count > 0);
 
         var visibleLines = lines.Where(line => line.Parts.Count > 0).ToArray();
-        ORows.ItemsSource = visibleLines;
+        ORows.ItemsSource = visibleLines.Select(line=>new {
+            line.Label,line.Parts,Accent=UseComponentColors?line.Accent:_textColor
+        }).ToArray();
         ORows.Visibility = V(visibleLines.Length > 0);
         if (OGraph.Visibility == Visibility.Visible) DrawGraph(f?.RecentFrameTimes);
     }

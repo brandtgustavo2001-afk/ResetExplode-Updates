@@ -92,6 +92,8 @@ public partial class MainWindow
         var show = OvShow;
         var s = BottleneckAnalyzer.Sample(_monitor, _gpus.FirstOrDefault(), f);
         var lines = new List<OverlayLine>();
+        var external=_settings.OverlayUseAfterburner?_msiSnapshot:AfterburnerSnapshot.Empty;
+        float? G(uint id)=>external.Gpu(id,_gpus.FirstOrDefault()?.Name??"");
         string T(float? v) => v is float x ? $"{x:0} °C" : "—";
         string P(double? v) => v is double x ? $"{x:0}%" : "—";
         void Line(string label, List<string> parts)
@@ -101,34 +103,34 @@ public partial class MainWindow
         }
 
         var gpu = new List<string>();
-        if (show.Contains("gpu_load")) gpu.Add(P(s.GpuLoad));
-        if (show.Contains("gpu_temp")) gpu.Add(T(s.GpuTemp));
+        if (show.Contains("gpu_load")) gpu.Add(P(G(0x30)??s.GpuLoad));
+        if (show.Contains("gpu_temp")) gpu.Add(T(G(0)??s.GpuTemp));
         if (show.Contains("gpu_hotspot")) gpu.Add("HS " + T(GpuRow(SensorType.Temperature, "GPU Hot Spot")?.RawValue));
-        if (show.Contains("gpu_clock")) gpu.Add(MainGpuClock(Nvml.ClockGraphics, "GPU Core") is uint c ? $"{c} MHz" : "— MHz");
-        if (show.Contains("gpu_memclock")) gpu.Add(MainGpuClock(Nvml.ClockMem, "GPU Memory") is uint mc ? $"mem {mc} MHz" : "mem —");
-        if (show.Contains("gpu_power")) gpu.Add(MainGpuPower() is float w ? $"{w:0} W" : "— W");
+        if (show.Contains("gpu_clock")) gpu.Add(G(0x20) is float ec ? $"{ec:0} MHz" : MainGpuClock(Nvml.ClockGraphics, "GPU Core") is uint c ? $"{c} MHz" : "— MHz");
+        if (show.Contains("gpu_memclock")) gpu.Add(G(0x22) is float emc ? $"mem {emc:0} MHz" : MainGpuClock(Nvml.ClockMem, "GPU Memory") is uint mc ? $"mem {mc} MHz" : "mem —");
+        if (show.Contains("gpu_power")) gpu.Add((G(0x61)??MainGpuPower()) is float w ? $"{w:0} W" : "— W");
         if (show.Contains("gpu_volt")) gpu.Add(GpuRow(SensorType.Voltage, "GPU Core")?.RawValue is float v ? $"{v:0.000} V" : "— V");
         if (show.Contains("gpu_fan"))
-            gpu.Add(GpuRow(SensorType.Fan, "GPU Fan", true)?.RawValue is float rpm && rpm > 0 ? $"{rpm:0} RPM"
+            gpu.Add(G(0x11) is float erpm ? $"{erpm:0} RPM" : G(0x10) is float epct ? $"fan {epct:0}%" : GpuRow(SensorType.Fan, "GPU Fan", true)?.RawValue is float rpm && rpm > 0 ? $"{rpm:0} RPM"
                   : GpuRow(SensorType.Control, "GPU Fan", true)?.RawValue is float pct ? $"fan {pct:0}%" : "fan —");
         if (show.Contains("gpu_perfcap") && MainGpuPerfCap() is { Length: > 0 } cap) gpu.Add(cap);
         Line("GPU", gpu);
 
         var vram = new List<string>();
         var vr = MainGpuVram();
-        if (show.Contains("vram_used")) vram.Add(vr is { } a ? $"{a.Used:0.0} GB" : "—");
+        if (show.Contains("vram_used")) vram.Add(G(0x31) is float em ? $"{em/1024:0.0} GB" : vr is { } a ? $"{a.Used:0.0} GB" : "—");
         if (show.Contains("vram_pct")) vram.Add(P(s.VramPct));
         if (show.Contains("vram_temp")) vram.Add(T(GpuRow(SensorType.Temperature, "GPU Memory")?.RawValue));
         Line("VRAM", vram);
 
         var cpu = new List<string>();
         var (avg, max) = CpuClocks();
-        if (show.Contains("cpu_load")) cpu.Add(P(s.CpuTotal));
+        if (show.Contains("cpu_load")) cpu.Add(P(external.Global(0x90,"CPU usage")??s.CpuTotal));
         if (show.Contains("cpu_maxcore")) cpu.Add(s.CpuMaxCore is float mx ? $"núcleo {mx:0}%" : "núcleo —");
-        if (show.Contains("cpu_temp")) cpu.Add(T(s.CpuTemp));
-        if (show.Contains("cpu_clock")) cpu.Add(avg is float ca ? $"{ca / 1000:0.00} GHz" : "— GHz");
+        if (show.Contains("cpu_temp")) cpu.Add(T(external.Global(0x80,"CPU temperature")??s.CpuTemp));
+        if (show.Contains("cpu_clock")) cpu.Add((external.Global(0xA0,"CPU clock")??avg) is float ca ? $"{ca / 1000:0.00} GHz" : "— GHz");
         if (show.Contains("cpu_clockmax")) cpu.Add(max is float cm ? $"pico {cm / 1000:0.00} GHz" : "pico —");
-        if (show.Contains("cpu_power")) cpu.Add(_monitor.CpuPower is float cw && cw > 0 ? $"{cw:0} W" : "— W"); // 0 = sem leitura (precisa de administrador)
+        if (show.Contains("cpu_power")) cpu.Add((external.Global(0x100,"CPU power")??_monitor.CpuPower) is float cw && cw > 0 ? $"{cw:0} W" : "— W");
         Line("CPU", cpu);
 
         var ram = new List<string>();

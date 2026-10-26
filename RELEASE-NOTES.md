@@ -1,4 +1,8 @@
-Atualizador recuperado com manifesto assinado RSA-PSS, validacao de SHA-256 e tamanho, download em segundo plano e aplicacao ao sair. Falhas de rede e pacotes incompletos nao substituem o aplicativo. Configuracoes e historico de energia permanecem em AppData.
+Monitoramento inspirado no fluxo MSI Afterburner + RTSS: integracao com o compartilhamento oficial de sensores do MSI e publicacao de OSD no RTSS, com fallback para o overlay em janela. Nova tabela de sensores MSI com atual/minimo/maximo e reset dos extremos, fonte de sensores opcional, modo de renderizacao e botao para abrir o RTSS instalado.
+
+O overlay em janela agora usa texto compacto, alinhamento, cores por componente e sombra. No RTSS, posicao/fonte/tamanho continuam sendo ajustados pelo proprio RivaTuner; as metricas, ordem e cores vem do ResetExplode. O RTSS precisa detectar o jogo e ter OSD habilitado. O grafico de frametime permanece no modo Janela.
+
+Nao altera overclock, ventoinhas ou perfis do MSI/RTSS. Sensores externos nao alteram a protecao termica do stress. Mantidos assinatura de atualizacoes, historico de energia, bandeja e configuracoes.
 
 IMPORTANTE PARA QUEM ESTA NA 0.16.8 OU ANTERIOR: a chave antiga de publicacao foi perdida. Execute este instalador UMA VEZ, sem desinstalar antes, para migrar a confianca para o canal v2. A 0.16.8 nao consegue fazer essa migracao sozinha. As proximas versoes assinadas pelo novo canal poderao ser baixadas pelo aplicativo. O manifesto antigo permanece disponivel para evitar erros nos clientes que ainda nao migraram.
 

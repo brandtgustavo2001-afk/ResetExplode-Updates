@@ -23,6 +23,8 @@ try {
     if($LASTEXITCODE -ne 0) { throw 'Testes termicos falharam' }
     & $Dotnet run --project tests/UpdaterTests.csproj -c Release
     if($LASTEXITCODE -ne 0) { throw 'Testes do atualizador falharam' }
+    & $Dotnet run --project tests/MonitoringTests.csproj -c Release
+    if($LASTEXITCODE -ne 0) { throw 'Testes de monitoramento falharam' }
     & $Dotnet publish ResetExplode.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None "-p:Version=$Version" -o (Join-Path $packageRoot 'ResetExplode-publish') --nologo
     if($LASTEXITCODE -ne 0) { throw 'Compilacao falhou' }
     & $Compiler /Qp "/DAppVersion=$Version" (Join-Path $PSScriptRoot 'ResetExplode-Setup.iss')

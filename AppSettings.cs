@@ -79,6 +79,8 @@ public sealed class AppSettings
     public int OverlayStyleVersion { get; set; }
 
     // Overlay
+    public string OverlayEngine { get; set; } = "Auto";
+    public bool OverlayUseAfterburner { get; set; }
     public string OverlayCorner { get; set; } = "TL";
     public double OverlayScale { get; set; } = 1.0;
     public double OverlayFontSize { get; set; } = 16;
@@ -168,6 +170,7 @@ public sealed class AppSettings
         }
 
         settings.OverlayScale = double.IsFinite(settings.OverlayScale) ? Math.Clamp(settings.OverlayScale, 0.5, 2) : 1;
+        if(settings.OverlayEngine is not ("Auto" or "Window")) settings.OverlayEngine="Auto";
         if (settings.OverlayCorner is not ("TL" or "TR" or "BL" or "BR")) settings.OverlayCorner = "TL";
         settings.OverlayFontSize = double.IsFinite(settings.OverlayFontSize) ? Math.Clamp(settings.OverlayFontSize, 9, 26) : 12;
         settings.OverlayBackgroundOpacity = double.IsFinite(settings.OverlayBackgroundOpacity) ? Math.Clamp(settings.OverlayBackgroundOpacity, 0, 1) : .78;

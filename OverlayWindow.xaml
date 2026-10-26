@@ -4,12 +4,11 @@
         Title="RESET EXPLODE overlay" WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" ShowInTaskbar="False" ShowActivated="False" ResizeMode="NoResize" Focusable="False"
         SizeToContent="WidthAndHeight" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
-    <Border x:Name="Box" Background="#E610141C" BorderBrush="#405A7186" BorderThickness="1" CornerRadius="10" Padding="16,12">
+    <Border x:Name="Box" Background="#38000000" BorderBrush="#405A7186" BorderThickness="0" CornerRadius="0" Padding="8,6">
         <Border.LayoutTransform>
             <ScaleTransform x:Name="Scale" ScaleX="1" ScaleY="1"/>
         </Border.LayoutTransform>
         <StackPanel x:Name="OverlayTextRoot" TextElement.FontFamily="Segoe UI" TextElement.FontSize="12" TextElement.Foreground="#F5F5F5" MaxWidth="420">
-            <DockPanel Margin="0,0,0,8"><Border Width="3" Height="12" CornerRadius="1" Background="#62D5FF" Margin="0,0,7,0"/><TextBlock Text="RESET / PERFORMANCE" FontSize="9" FontWeight="SemiBold" Foreground="#B5C4D4"/></DockPanel>
             <!-- FPS em destaque (cada parte aparece só se escolhida na aba Overlay) -->
             <StackPanel x:Name="OFpsRow" Orientation="Horizontal">
                 <TextBlock x:Name="OFps" Text="—" FontSize="24" FontWeight="Bold"/>
@@ -23,15 +22,15 @@
             <ItemsControl x:Name="ORows" Margin="0,2,0,0">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Grid Margin="0,3,0,3">
+                        <Grid Margin="0,2,0,2" TextElement.Foreground="{Binding Accent}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" MinWidth="54" SharedSizeGroup="Component"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="{Binding Label}" Foreground="#62D5FF" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="{Binding Label}" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,10,0"/>
                             <ItemsControl Grid.Column="1" ItemsSource="{Binding Parts}">
                                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate><DataTemplate><Border Background="#16FFFFFF" CornerRadius="3" Padding="5,2" Margin="0,0,5,3"><TextBlock Text="{Binding}"/></Border></DataTemplate></ItemsControl.ItemTemplate>
+                                <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" MinWidth="64" Margin="0,0,10,0"/></DataTemplate></ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </Grid>
                     </DataTemplate>

@@ -15,4 +15,5 @@ jobs:
           dotnet-version: '8.0.x'
       - run: dotnet run --project tests/StressPolicyTests.csproj -c Release
       - run: dotnet run --project tests/UpdaterTests.csproj -c Release
+      - run: dotnet run --project tests/MonitoringTests.csproj -c Release
       - run: dotnet build ResetExplode.csproj -c Release --nologo

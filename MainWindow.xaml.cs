@@ -87,6 +87,7 @@ public partial class MainWindow : Window
         InitUpdates();
         InitEnergyUsage();
         InitBackgroundMode();
+        InitMonitoringIntegration();
         // Respeitar a área útil em notebooks e monitores com escala de DPI alta.
         var workArea = SystemParameters.WorkArea;
         MinWidth = Math.Min(MinWidth, workArea.Width);
@@ -146,6 +147,7 @@ public partial class MainWindow : Window
                 (_monitor.LastError == null ? "" : " · alguns sensores indisponíveis (consulte o diagnóstico)");
             UpdateStressPanel();
             CollectEnergyUsage();
+            RefreshMonitoringIntegration();
             UpdateGpuLive();
             UpdateCpuSensorWarning();
             CollectDashSample();
@@ -1455,6 +1457,7 @@ public partial class MainWindow : Window
         else
         {
             _overlayTimer?.Stop();
+            _rtss.Clear();
             _overlay?.Hide();
             UpdateOverlayStatus(null);
         }
@@ -1495,7 +1498,8 @@ public partial class MainWindow : Window
 
     private void UpdateOverlay()
     {
-        if (ChkOverlay.IsChecked != true) { _overlay?.Hide(); UpdateOverlayStatus(null); return; }
+        if (ChkOverlay.IsChecked != true) { _rtss.Clear(); _overlay?.Hide(); UpdateOverlayStatus(null); return; }
+        RefreshMonitoringIntegration();
         var game = _gameDetection.Foreground(_settings.OverlayGameExecutables);
         var f = game.HasValue ? _frames.GetStats(game.Value.Pid) : null;
         if (_overlay != null && game.HasValue)
@@ -1505,12 +1509,20 @@ public partial class MainWindow : Window
                 _lastOverlayGame = game.Value.Name;
                 AppDiagnostics.Log("Overlay: jogo reconhecido: " + game.Value.Name);
             }
+            var lines=BuildOverlayLines(f);
+            var rtssFrames=_settings.OverlayEngine=="Auto"?_rtss.GetFrames(game.Value.Pid):null;
+            if(rtssFrames is not null && _rtss.Publish(BuildRtssText(f,lines,game.Value.Name,rtssFrames))) {
+                _overlay.Hide();UpdateOverlayStatus(f);
+                OvStatus.Text=$"RTSS · {game.Value.Name} · {rtssFrames.Fps:0} FPS · {rtssFrames.FrameTimeMs:0.0} ms";
+                return;
+            }
+            _rtss.Clear();
             _overlay.TargetWindow = game.Value.Window;
-            _overlay.Update(f, BuildOverlayLines(f), OvShow, OvShow.Contains("clock") ? DateTime.Now.ToString("HH:mm") : null, game.Value.Name);
+            _overlay.Update(f, lines, OvShow, OvShow.Contains("clock") ? DateTime.Now.ToString("HH:mm") : null, game.Value.Name);
             if (!_overlay.IsVisible) _overlay.Show();
             _overlay.KeepOnTop(); // o jogo pode ter passado na frente (janela sem borda "sempre no topo")
         }
-        else _overlay?.Hide();
+        else { _rtss.Clear(); _overlay?.Hide(); }
         UpdateOverlayStatus(f);
         if (game.HasValue && f == null) OvStatus.Text = $"Jogo detectado: {game.Value.Name} · sensores ativos; FPS indisponível neste modo/API.";
     }

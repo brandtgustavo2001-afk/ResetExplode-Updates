@@ -1591,6 +1591,14 @@
                                     <TextBlock Foreground="{DynamicResource Muted}" Margin="46,6,0,8" TextWrapping="Wrap" Text="Aparece somente com um jogo reconhecido em primeiro plano. Fica oculto na área de trabalho, em navegadores e ao usar Alt+Tab."/>
                                     <TextBox x:Name="OvHotkey" Text="Ctrl + Shift + O" IsReadOnly="True" PreviewKeyDown="OvHotkey_KeyDown" Width="260" HorizontalAlignment="Left" Margin="46,0,0,0"/>
                                     <TextBlock x:Name="OvHotkeyStatus" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="46,6,0,0"/>
+                                    <TextBlock Text="RENDERIZAÇÃO" Style="{StaticResource Label}" Margin="0,18,0,4"/>
+                                    <ComboBox x:Name="OvEngine" SelectionChanged="OvIntegration_Changed" HorizontalAlignment="Left" MinWidth="300" AutomationProperties.Name="Modo de renderização do overlay">
+                                        <ComboBoxItem Content="Automático · RTSS quando disponível"/>
+                                        <ComboBoxItem Content="Janela · sem dependência do RTSS"/>
+                                    </ComboBox>
+                                    <TextBlock x:Name="OvRtssStatus" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,8,0,6"/>
+                                    <Button Content="ABRIR RIVATUNER (RTSS)" Style="{StaticResource OutlineButton}" HorizontalAlignment="Left" Click="OvOpenRtss_Click"/>
+                                    <TextBlock Text="No modo RTSS, posição, fonte e tamanho são ajustados no RivaTuner. As métricas e cores vêm do ResetExplode. O RTSS precisa detectar o jogo e ter o OSD habilitado em seu perfil. O gráfico de frametime abaixo pertence ao modo janela." Foreground="{DynamicResource Faint}" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -1640,6 +1648,18 @@
                             <StackPanel>
                                 <TextBlock Text="APARÊNCIA E PRÉVIA" Style="{StaticResource Label}"/>
                                 <Button Content="APLICAR ESTILO CLÁSSICO DE MONITORAMENTO" Click="OvClassic_Click" Style="{StaticResource OutlineButton}" HorizontalAlignment="Left" Margin="0,0,0,14"/>
+                                <CheckBox x:Name="OvMsiSensors" Content="Usar sensores do MSI Afterburner no overlay, quando disponíveis" Checked="OvIntegration_Changed" Unchecked="OvIntegration_Changed" Margin="0,0,0,8"/>
+                                <TextBlock x:Name="OvMsiStatus" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                <TextBlock Text="Leitura do compartilhamento oficial, sem alterar overclock ou ventoinhas. Valores ausentes usam a coleta interna. O corte térmico do stress continua independente do MSI. Mínimos e máximos são observados enquanto esta página ou a integração estiver ativa." Foreground="{DynamicResource Faint}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                <DataGrid x:Name="OvExternalSensors" AutoGenerateColumns="False" IsReadOnly="True" MaxHeight="240" EnableRowVirtualization="True" CanUserAddRows="False" AutomationProperties.Name="Sensores compartilhados pelo MSI Afterburner">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="SENSOR MSI" Binding="{Binding Name}" Width="*"/>
+                                        <DataGridTextColumn Header="ATUAL" Binding="{Binding Display}" Width="115"/>
+                                        <DataGridTextColumn Header="MÍN." Binding="{Binding MinDisplay}" Width="115"/>
+                                        <DataGridTextColumn Header="MÁX." Binding="{Binding MaxDisplay}" Width="115"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <Button Content="ZERAR MÍNIMOS E MÁXIMOS DO MSI" Click="OvResetMsi_Click" Style="{StaticResource OutlineButton}" HorizontalAlignment="Left" Margin="0,8,0,16"/>
                                 <CheckBox x:Name="OvComponentColors" Content="Cores por componente: GPU verde, VRAM azul, CPU laranja, RAM violeta e FPS amarelo" Margin="0,0,0,12"/>
                                 <WrapPanel>
                                     <StackPanel Margin="0,0,24,12"><TextBlock Text="Fonte"/><ComboBox x:Name="OvFont" Width="150"><ComboBoxItem Content="Consolas" IsSelected="True"/><ComboBoxItem Content="Cascadia Mono"/><ComboBoxItem Content="Segoe UI"/></ComboBox></StackPanel>
