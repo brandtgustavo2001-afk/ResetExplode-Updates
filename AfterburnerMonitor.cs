@@ -20,10 +20,10 @@ public sealed record AfterburnerSnapshot(IReadOnlyList<AfterburnerReading> Entri
     public float? Gpu(uint id,string device)
     {
         if(string.IsNullOrWhiteSpace(device)) return null;
-        int index=-1;
+        int index=-1,matches=0;
         for(int i=0;i<Gpus.Count;i++)
-            if(!string.IsNullOrWhiteSpace(Gpus[i]) && (Gpus[i].Equals(device,StringComparison.OrdinalIgnoreCase) || device.Contains(Gpus[i],StringComparison.OrdinalIgnoreCase))) {index=i;break;}
-        return index<0 ? null : Entries.FirstOrDefault(e=>e.SourceId==id && e.GpuIndex==(uint)index)?.Value;
+            if(!string.IsNullOrWhiteSpace(Gpus[i]) && (Gpus[i].Equals(device,StringComparison.OrdinalIgnoreCase) || device.Contains(Gpus[i],StringComparison.OrdinalIgnoreCase))) {index=i;matches++;}
+        return matches!=1 ? null : Entries.FirstOrDefault(e=>e.SourceId==id && e.GpuIndex==(uint)index)?.Value;
     }
 }
 

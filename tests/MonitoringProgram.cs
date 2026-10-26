@@ -28,6 +28,8 @@ Check(snapshot.Entries.Count==3,"layout MAHM v2 interpretado");
 Check(snapshot.Global(0x80,"CPU temperature")==58,"temperatura total nao confundida com nucleo");
 Check(snapshot.Gpu(0,"Test GPU")==60,"GPU selecionada por identidade");
 Check(snapshot.Gpu(0,"Other GPU") is null,"nao atribui sensor de outra GPU");
+Check((snapshot with {Gpus=new[]{"Test GPU","Test GPU"}}).Gpu(0,"Test GPU") is null,"GPUs de mesmo nome exigem fallback interno");
+Check((snapshot with {Entries=snapshot.Entries.Where(e=>e.Name!="CPU temperature").ToArray()}).Global(0x80,"CPU temperature") is null,"nao inventa temperatura total a partir de nucleos");
 Check(AfterburnerMonitor.Parse(source,now+8).Entries.Count==0,"amostra antiga descartada");
 U(12,uint.MaxValue);Check(AfterburnerMonitor.Parse(source,now).Entries.Count==0,"contagem corrompida rejeitada");U(12,3);
 U(8,uint.MaxValue);Check(AfterburnerMonitor.Parse(source,now).Entries.Count==0,"offset corrompido rejeitado");U(8,32);
