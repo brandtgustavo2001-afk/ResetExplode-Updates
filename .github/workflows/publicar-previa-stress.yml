@@ -1,0 +1,54 @@
+name: Publicar previa segura de stress
+
+# Este fluxo e executado somente na branch de previa. A release publica
+# permanece v0.16.8 e seu update.json assinado nao e alterado.
+on:
+  push:
+    branches:
+      - preview/safe-stress
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validar-e-publicar:
+    if: github.repository == 'brandtgustavo2001-afk/ResetExplode-Updates'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Testar politica termica
+        run: dotnet run --project tests/StressPolicyTests.csproj --configuration Release
+
+      - name: Compilar aplicativo portatil independente
+        shell: pwsh
+        run: |
+          dotnet publish ResetExplode.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None --output dist/publish --nologo
+          if ($LASTEXITCODE -ne 0) { throw 'Falha na compilacao' }
+          if (!(Test-Path 'dist/publish/ResetExplodeSafeStressPreview.exe')) { throw 'Executavel ausente' }
+
+      - name: Guardar executavel como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: ResetExplodeSafeStressPreview-win-x64
+          path: dist/publish/ResetExplodeSafeStressPreview.exe
+
+      - name: Publicar somente como prerelease
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = 'v0.16.0-safe.1'
+          $existing = gh release list --repo $env:GITHUB_REPOSITORY --limit 100 --json tagName | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'Nao foi possivel consultar as releases' }
+          if ($existing | Where-Object { $_.tagName -eq $tag }) {
+            Write-Host "Previa $tag ja publicada; sem alterar releases existentes."
+            exit 0
+          }
+          gh release create $tag 'dist/publish/ResetExplodeSafeStressPreview.exe' 'SAFESTRESS-LEIA-ME.md' --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --prerelease --latest=false --title 'RESET EXPLODE - Previa de stress de CPU seguro' --notes-file 'SAFESTRESS-LEIA-ME.md'
+          if ($LASTEXITCODE -ne 0) { throw 'Falha ao publicar prerelease' }
