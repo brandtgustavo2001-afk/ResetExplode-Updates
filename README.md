@@ -186,3 +186,12 @@ Ao criar uma tag (`git tag v0.12` e `git push --tags`), também sai uma release 
 ## Licença
 
 MIT — veja o arquivo [LICENSE](LICENSE).
+# Codigo recuperado e atualizacoes assinadas
+
+O codigo atual deste repositorio inclui o atualizador v2, overlay, bandeja, energia e controle termico do teste de CPU.
+
+Baixe a release estavel em https://github.com/brandtgustavo2001-afk/ResetExplode-Updates/releases/latest.
+Quem esta na 0.16.8 ou anterior precisa executar uma vez o instalador de migracao, sem desinstalar. Depois disso, novas releases assinadas chegam pelo aplicativo.
+
+Documentacao de publicacao, recuperacao e testes: [installer/ATUALIZACOES.md](installer/ATUALIZACOES.md). A chave privada e mantida no cofre de segredos do GitHub; nao faz parte do codigo.
+

@@ -1,5 +1,6 @@
-param([string]$Version = '0.16.9')
+param([Parameter(Mandatory)][string]$Version)
 $ErrorActionPreference = 'Stop'
+if($Version -notmatch '^\d+\.\d+\.\d+$') { throw 'Versao numerica invalida' }
 $sourceRoot = Split-Path $PSScriptRoot -Parent
 $releaseDir = Join-Path (Split-Path $sourceRoot -Parent) 'ResetExplode-instalador'
 $keyPath = Join-Path $env:USERPROFILE '.config\ResetExplode\publishing\update-signing-v2.dpapi'

@@ -1,6 +1,8 @@
-param([string]$Version = '0.16.9', [string]$Dotnet = "$env:USERPROFILE\.dotnet\dotnet.exe", [string]$Compiler = '')
+param([string]$Version = '', [string]$Dotnet = "$env:USERPROFILE\.dotnet\dotnet.exe", [string]$Compiler = '')
 $ErrorActionPreference = 'Stop'
 $sourceRoot = Split-Path $PSScriptRoot -Parent
+if(!$Version) { $project = [xml](Get-Content (Join-Path $sourceRoot 'ResetExplode.csproj') -Raw); $Version = @($project.Project.PropertyGroup.Version | Where-Object {$_})[0] }
+if($Version -notmatch '^\d+\.\d+\.\d+$') { throw 'Versao numerica invalida' }
 $packageRoot = Split-Path $sourceRoot -Parent
 if (!$Compiler) { $Compiler = Join-Path $packageRoot 'ResetExplode-build-tools\InnoPortable\tools\ISCC.exe' }
 foreach($file in @($Compiler,$Dotnet)) { if(!(Test-Path -LiteralPath $file)) { throw "Ferramenta ausente: $file" } }
