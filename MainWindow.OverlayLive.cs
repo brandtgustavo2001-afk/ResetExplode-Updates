@@ -8,6 +8,25 @@ namespace ResetExplode;
 
 public partial class MainWindow
 {
+    private double _previousOverlayOpacity=35;
+    private bool _syncingTransparency;
+    private void OvTransparent_Changed(object sender,RoutedEventArgs e)
+    {
+        if(!_overlayReady||_syncingTransparency)return;
+        _syncingTransparency=true;
+        try {
+            if(OvTransparent.IsChecked==true){if(OvOpacity.Value>0)_previousOverlayOpacity=OvOpacity.Value;OvOpacity.Value=0;}
+            else if(OvOpacity.Value==0)OvOpacity.Value=_previousOverlayOpacity;
+        }finally{_syncingTransparency=false;}
+        QueueLiveAppearance();
+    }
+    private void OvOpacity_Changed(object sender,RoutedPropertyChangedEventArgs<double> e)
+    {
+        if(!_overlayReady||_syncingTransparency||OvTransparent is null)return;
+        _syncingTransparency=true;
+        try {OvTransparent.IsChecked=e.NewValue==0;if(e.NewValue>0)_previousOverlayOpacity=e.NewValue;}
+        finally{_syncingTransparency=false;}
+    }
     private DispatcherTimer? _liveAppearanceTimer,_saveAppearanceTimer;
     private bool _liveAppearanceBusy,_liveAppearanceWired;
     private void InitLiveOverlayControls()

@@ -23,6 +23,7 @@ public partial class MainWindow
         OvFontSize.Value = _settings.OverlayFontSize;
         OvColor.Text = _settings.OverlayColor;
         OvOpacity.Value = _settings.OverlayBackgroundOpacity * 100;
+        OvTransparent.IsChecked = OvOpacity.Value == 0;
         OvOffsetX.Text = _settings.OverlayOffsetX.ToString(CultureInfo.CurrentCulture);
         OvOffsetY.Text = _settings.OverlayOffsetY.ToString(CultureInfo.CurrentCulture);
         OvInterval.Text = _settings.OverlayIntervalMs.ToString();
