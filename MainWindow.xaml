@@ -1636,12 +1636,11 @@
                                         <Button Style="{StaticResource OutlineButton}" Content="TUDO" Tag="all" Padding="10,4" FontSize="11" Click="OvPreset_Click"/>
                                     </WrapPanel>
                                 </Grid>
-                                <TextBlock Foreground="{DynamicResource Faint}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0">
-                                    Marque o que quer ver por cima do jogo; a mudança vale na hora e fica salva. Cada componente vira uma linha
-                                    (GPU, VRAM, CPU, RAM) só com os itens escolhidos. Clock da memória, hotspot e ventoinha dependem da placa;
-                                    o limitador (PerfCap) é só NVIDIA. Clock e temperatura da CPU precisam do app como administrador.
-                                </TextBlock>
-                                <StackPanel x:Name="OvItemsPanel"/>
+                                <TextBlock Text="Ligue apenas o que você quer ver. A mudança aparece no jogo na hora." Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,4,0,12"/>
+                                <WrapPanel x:Name="OvQuickMetrics"/>
+                                <Expander Header="Escolher cada indicador (avançado)" IsExpanded="False" Foreground="{DynamicResource Muted}" Margin="0,8,0,0">
+                                    <StackPanel x:Name="OvItemsPanel"/>
+                                </Expander>
                             </StackPanel>
                         </Border>
 

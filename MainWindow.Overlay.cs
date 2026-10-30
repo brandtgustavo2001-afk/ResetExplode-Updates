@@ -14,6 +14,17 @@ public partial class MainWindow
     /// <summary>Cria as caixas de seleção da aba Overlay, agrupadas por componente.</summary>
     private void BuildOverlayPicker()
     {
+        OvQuickMetrics.Children.Clear();
+        foreach(var quick in new[]{("FPS","FPS"),("GPU","Placa de vídeo"),("CPU","Processador"),("RAM","Memória RAM"),("VRAM","Memória de vídeo"),("Outros","Nome do jogo")}) {
+            var metrics=OverlayMetrics.All.Where(m=>m.Group==quick.Item1&&(quick.Item1!="Outros"||m.Key=="game")).ToArray();
+            var toggle=new CheckBox {Content=quick.Item2,IsChecked=metrics.Any(m=>OvShow.Contains(m.Key)),Margin=new Thickness(0,0,20,10)};
+            toggle.Click+=(_,_)=> {
+                if(toggle.IsChecked==true)foreach(var metric in metrics.Where(m=>m.Default))OvShow.Add(metric.Key);
+                else foreach(var metric in metrics)OvShow.Remove(metric.Key);
+                SaveOverlayItems();BuildOverlayPicker();
+            };
+            OvQuickMetrics.Children.Add(toggle);
+        }
         OvItemsPanel.Children.Clear();
         foreach (var group in OverlayMetrics.All.GroupBy(m => m.Group))
         {
@@ -40,6 +51,7 @@ public partial class MainWindow
     {
         _settings.OverlayItems = OverlayMetrics.All.Select(m => m.Key).Where(OvShow.Contains).ToList();
         _settings.Save();
+        UpdateOverlayPreview();
         UpdateOverlay();
     }
 
