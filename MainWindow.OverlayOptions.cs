@@ -18,6 +18,7 @@ public partial class MainWindow
         bool ready=_overlayReady;_overlayReady=false;
         foreach(var rb in OvCornerPanel.Children.OfType<RadioButton>())rb.IsChecked=(string)rb.Tag==_settings.OverlayCorner;
         foreach(var rb in OvScalePanel.Children.OfType<RadioButton>())rb.IsChecked=Math.Abs(double.Parse((string)rb.Tag,CultureInfo.InvariantCulture)-_settings.OverlayScale)<.01;
+        OvKeepUnfocused.IsChecked=_settings.OverlayKeepWhenUnfocused;
         OvFont.Text = _settings.OverlayFont;
         OvFontSize.Value = _settings.OverlayFontSize;
         OvColor.Text = _settings.OverlayColor;
@@ -108,7 +109,7 @@ public partial class MainWindow
     }
 
     private void OvAppearanceApply_Click(object sender, RoutedEventArgs e) => TryApplyOverlayAppearance();
-    private bool TryApplyOverlayAppearance()
+    private bool TryApplyOverlayAppearance(bool save=true,bool live=false)
     {
         if (!System.Text.RegularExpressions.Regex.IsMatch(OvColor.Text.Trim(), "^#[0-9a-fA-F]{6}$") ||
             !double.TryParse(OvOffsetX.Text, out double x) || !double.IsFinite(x) || x < 0 || x > 1000 ||
@@ -119,8 +120,8 @@ public partial class MainWindow
         if (order.Length != 4 || !order.ToHashSet().SetEquals(new[] { "GPU", "VRAM", "CPU", "RAM" }))
         { OvAppearanceStatus.Text = "Ordem: escreva GPU, VRAM, CPU e RAM uma vez cada, separados por vírgula."; return false; }
         if(!OverlayDesign.IsFont(OvFont.Text)||!Fonts.SystemFontFamilies.Any(f=>f.Source.Equals(OvFont.Text,StringComparison.OrdinalIgnoreCase)))
-        { OvAppearanceStatus.Text="Escolha uma fonte instalada no Windows.";OvFont.Focus();return false; }
-        if(!TryReadOverlayDesigner(out var design))return false;
+        { OvAppearanceStatus.Text="Escolha uma fonte instalada no Windows.";if(!live)OvFont.Focus();return false; }
+        if(!TryReadOverlayDesigner(out var design,live))return false;
         _settings.OverlayDesign=design;
         _settings.OverlayFont = OvFont.Text;
         _settings.OverlayFontSize = OvFontSize.Value;
@@ -129,8 +130,8 @@ public partial class MainWindow
         _settings.OverlayIntervalMs = interval; _settings.OverlayOrder = string.Join(',', order);
         _settings.OverlayBorder = OvBorder.IsChecked == true; _settings.OverlayBigFps = OvBigFps.IsChecked == true;
         _settings.OverlayComponentColors = OvComponentColors.IsChecked == true;
-        _settings.Save(); ApplyOverlayOptions(); UpdateOverlayPreview(); UpdateOverlay();
-        OvAppearanceStatus.Text = "Personalização salva e aplicada no jogo. A prévia usa valores de exemplo.";
+        if(save)_settings.Save(); ApplyOverlayOptions(); UpdateOverlay();
+        OvAppearanceStatus.Text = "Alterações aplicadas no jogo e na prévia. Salvamento automático ativo.";
         return true;
     }
 

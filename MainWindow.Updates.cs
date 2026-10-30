@@ -37,6 +37,7 @@ public partial class MainWindow
     {
         if (_checkingUpdate || _closed) return;
         _checkingUpdate = true; BtnCheckUpdates.IsEnabled = false;
+        BtnCheckUpdates.Content="PROCURANDO…";
         AppDiagnostics.Log("Atualizador: iniciando verificacao do canal v2.");
         try
         {
@@ -46,6 +47,7 @@ public partial class MainWindow
             _preparedUpdate = update;
             AppDiagnostics.Log(update == null ? "Atualizador: nenhuma versao superior disponivel." : $"Atualizador: {update.Package.Version} validada e pronta para aplicar ao encerrar.");
             BtnApplyUpdate.IsEnabled = update != null;
+            UpdateStatus.Text=update is null?"Tudo atualizado. Você já usa a versão mais recente.":$"Versão {update.Package.Version} pronta. Clique abaixo para instalar.";
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
@@ -53,7 +55,7 @@ public partial class MainWindow
             AppDiagnostics.Log("Verificar atualização", ex);
             if (!_closed) UpdateStatus.Text = "Não foi possível verificar agora. A versão atual continua disponível. Tente novamente com acesso à internet.";
         }
-        finally { _checkingUpdate = false; if (!_closed) BtnCheckUpdates.IsEnabled = true; }
+        finally { _checkingUpdate = false; if (!_closed) {BtnCheckUpdates.IsEnabled = true;BtnCheckUpdates.Content=_preparedUpdate is null?"PROCURAR NOVA VERSÃO":"INSTALAR ATUALIZAÇÃO";} }
     }
 
     private void AutomaticUpdates_Changed(object sender, RoutedEventArgs e)
@@ -63,7 +65,8 @@ public partial class MainWindow
         if (!_settings.AutomaticUpdates && _preparedUpdate != null)
             UpdateStatus.Text = "Atualização pronta. Clique em atualizar quando desejar; a aplicação automática está desativada.";
     }
-    private async void CheckUpdates_Click(object sender, RoutedEventArgs e) => await CheckUpdatesAsync();
+    private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
+    { if(_preparedUpdate is not null)ApplyUpdate_Click(sender,e);else await CheckUpdatesAsync(); }
     private void ApplyUpdate_Click(object sender, RoutedEventArgs e)
     {
         if (_preparedUpdate == null) return;

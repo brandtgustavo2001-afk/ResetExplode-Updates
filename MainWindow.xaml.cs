@@ -676,6 +676,7 @@ public partial class MainWindow : Window
         BuildOverlayPicker();
         InitOverlayCustomization();
         _overlayReady = true;
+        InitLiveOverlayControls();
         ChkOverlay.IsChecked = _settings.OverlayEnabled;
         UpdateOverlayStatus(null);
     }
@@ -1507,7 +1508,7 @@ public partial class MainWindow : Window
     {
         if (ChkOverlay.IsChecked != true) { _rtss.Clear(); _overlay?.Hide(); UpdateOverlayStatus(null); return; }
         RefreshMonitoringIntegration();
-        var game = _gameDetection.Foreground(_settings.OverlayGameExecutables);
+        var game = _gameDetection.ForOverlay(_settings.OverlayGameExecutables,_settings.OverlayKeepWhenUnfocused);
         var f = game.HasValue ? _frames.GetStats(game.Value.Pid) : null;
         if (_overlay != null && game.HasValue)
         {
@@ -1518,9 +1519,9 @@ public partial class MainWindow : Window
             }
             var lines=BuildOverlayLines(f);
             var rtssFrames=_settings.OverlayEngine=="Auto"?_rtss.GetFrames(game.Value.Pid):null;
-            if(rtssFrames is not null && _rtss.Publish(BuildRtssText(f,lines,game.Value.Name,rtssFrames,game.Value.Window))) {
+            if(_settings.OverlayEngine=="Auto" && (rtssFrames is not null||_rtss.HasApplication(game.Value.Pid)) && _rtss.Publish(BuildRtssText(f,lines,game.Value.Name,rtssFrames,game.Value.Window))) {
                 _overlay.Hide();UpdateOverlayStatus(f);
-                OvStatus.Text=$"RTSS · {game.Value.Name} · {rtssFrames.Fps:0} FPS · {rtssFrames.FrameTimeMs:0.0} ms";
+                OvStatus.Text=rtssFrames is not null?$"No jogo · {game.Value.Name} · {rtssFrames.Fps:0} FPS":$"{game.Value.Name} aberto · alterações prontas; aguardando novos frames do jogo.";
                 return;
             }
             _rtss.Clear();

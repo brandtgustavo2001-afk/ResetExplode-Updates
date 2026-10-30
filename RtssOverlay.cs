@@ -48,6 +48,17 @@ public sealed class RtssOverlay : IDisposable
             Status="RTSS aberto, mas não detectou este jogo; usando overlay em janela.";return null;
         }catch(Exception ex)when(ex is IOException or UnauthorizedAccessException or ArgumentException){Status="RTSS não conectado; usando overlay em janela.";Disconnect();return null;}
     }
+    public bool HasApplication(int processId)
+    {
+        try {
+            if(!Connect())return false;var v=_view!;
+            if(v.Capacity<40||v.ReadUInt32(0)!=0x52545353||(v.ReadUInt32(4)>>16)!=2)return false;
+            uint size=v.ReadUInt32(8),offset=v.ReadUInt32(12),count=v.ReadUInt32(16);
+            if(size<284||size>1024*1024||offset<40||count>4096||offset+(long)size*count>v.Capacity)return false;
+            for(int i=0;i<count;i++)if(v.ReadUInt32(offset+(long)i*size)==(uint)processId)return true;
+            return false;
+        }catch(Exception ex)when(ex is IOException or UnauthorizedAccessException or ArgumentException){Disconnect();return false;}
+    }
     private unsafe bool Write(string text,bool release)
     {
         try {

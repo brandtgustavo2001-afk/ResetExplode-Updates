@@ -21,21 +21,35 @@ static class Preview
         bool rejected=false;try {OverlayStyleProfile.Import("{}",imported);}catch(InvalidDataException){rejected=true;}
         if(!rejected)throw new Exception("Formato invalido aceito");
         Console.WriteLine("PASS: exportacao sem credenciais, importacao fiel, preferencias preservadas e formato invalido rejeitado.");
-        var application=new ResetExplode.App();application.InitializeComponent();ThemeManager.Apply(false);
-        if(args.FirstOrDefault()=="--designer") {
-            var xml=System.Xml.Linq.XDocument.Load(args[1]);System.Xml.Linq.XNamespace ns="http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        var application=new Application {ShutdownMode=ShutdownMode.OnExplicitShutdown};
+        application.Resources.MergedDictionaries.Add(new ResourceDictionary {Source=new Uri("pack://application:,,,/ResetExplode;component/Theme.xaml")});
+        ThemeManager.Apply(false);
+        if(args.FirstOrDefault()=="--designer"||File.Exists(Path.Combine(Environment.CurrentDirectory,"MainWindow.xaml"))) {
+            bool designer=args.FirstOrDefault()=="--designer";
+            var xml=System.Xml.Linq.XDocument.Load(designer?args[1]:Path.Combine(Environment.CurrentDirectory,"MainWindow.xaml"));System.Xml.Linq.XNamespace ns="http://schemas.microsoft.com/winfx/2006/xaml/presentation";
             var source=xml.Descendants(ns+"TextBlock").First(e=>(string?)e.Attribute("Text")=="APARÊNCIA E PRÉVIA").Parent!.Parent!;
             var clone=new System.Xml.Linq.XElement(source);
             foreach(var attr in clone.DescendantsAndSelf().SelectMany(e=>e.Attributes()).Where(a=>new[]{"Click","Checked","Unchecked","SelectionChanged"}.Contains(a.Name.LocalName)).ToArray())attr.Remove();
             var card=(FrameworkElement)System.Windows.Markup.XamlReader.Parse(clone.ToString());
-            ((DataGrid)card.FindName("OvRowStyles")).ItemsSource=new OverlayDesign().Rows;
+            var rows=new OverlayDesign().Rows;
+            ((DataGrid)card.FindName("OvRowStyles")).ItemsSource=rows;
+            var easy=(ComboBox)card.FindName("OvEasyRow");easy.ItemsSource=rows;easy.SelectedIndex=0;
             foreach(var pair in new Dictionary<string,string>{{"OvBackground","#000000"},{"OvLineSpacing","3"},{"OvGameAlias","Minecraft"}})((TextBox)card.FindName(pair.Key)).Text=pair.Value;
             var panel=new Border {Width=1040,Padding=new Thickness(20),Background=(Brush)application.FindResource("Bg"),Child=card};
             panel.SetValue(System.Windows.Documents.TextElement.ForegroundProperty,application.FindResource("Fg"));
             panel.Measure(new Size(1040,double.PositiveInfinity));panel.Arrange(new Rect(panel.DesiredSize));panel.UpdateLayout();
+            application.Dispatcher.Invoke(()=>{},System.Windows.Threading.DispatcherPriority.DataBind);
+            ((TextBox)card.FindName("OvEasyLabel")).SetCurrentValue(TextBox.TextProperty,"Minha GPU");
+            application.Dispatcher.Invoke(()=>{},System.Windows.Threading.DispatcherPriority.DataBind);
+            if(rows[0].Label!="Minha GPU")throw new Exception("Nome nao atualiza antes de perder foco");
+            rows[0].Size=150;application.Dispatcher.Invoke(()=>{},System.Windows.Threading.DispatcherPriority.DataBind);
+            if(((Slider)card.FindName("OvEasySize")).Value!=150)throw new Exception("Tamanho nao sincroniza ao vivo");
+            Console.WriteLine("PASS: nome sincroniza enquanto digita e tamanho sincroniza sem botao Aplicar.");
+            if(designer) {
             var capture=new RenderTargetBitmap(1040,(int)Math.Ceiling(panel.ActualHeight),96,96,PixelFormats.Pbgra32);capture.Render(panel);
             var png=new PngBitmapEncoder();png.Frames.Add(BitmapFrame.Create(capture));using(var stream=File.Create(args[2]))png.Save(stream);
             Console.WriteLine(args[2]);application.Shutdown();return;
+            }
         }
         var overlay=new OverlayWindow();
         overlay.ApplyAppearance(new AppSettings {OverlayFont="Consolas",OverlayFontSize=16,OverlayBackgroundOpacity=.22,OverlayComponentColors=true});

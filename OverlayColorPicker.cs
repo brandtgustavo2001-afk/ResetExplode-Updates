@@ -6,7 +6,7 @@ namespace ResetExplode;
 
 public static class OverlayColorPicker
 {
-    public static string? Pick(Window owner,string initial)
+    public static string? Pick(Window owner,string initial,Action<string>? preview=null)
     {
         var color=(Color)ColorConverter.ConvertFromString(initial);
         var panel=new StackPanel {Margin=new Thickness(20)};
@@ -20,12 +20,19 @@ public static class OverlayColorPicker
             panel.Children.Add(new TextBlock {Text=names[i]});var slider=new Slider {Minimum=0,Maximum=255,Value=values[i],TickFrequency=1,IsSnapToTickEnabled=true,Margin=new Thickness(0,4,0,12)};
             sliders.Add(slider);panel.Children.Add(slider);
         }
-        void Refresh() {var c=Color.FromRgb((byte)sliders[0].Value,(byte)sliders[1].Value,(byte)sliders[2].Value);swatch.Background=new SolidColorBrush(c);hex.Text=$"#{c.R:X2}{c.G:X2}{c.B:X2}";}
+        bool syncing=false;
+        void Refresh() {if(syncing)return;syncing=true;var c=Color.FromRgb((byte)sliders[0].Value,(byte)sliders[1].Value,(byte)sliders[2].Value);swatch.Background=new SolidColorBrush(c);hex.Text=$"#{c.R:X2}{c.G:X2}{c.B:X2}";syncing=false;preview?.Invoke(hex.Text);}
         foreach(var slider in sliders)slider.ValueChanged+=(_,_)=>Refresh();
+        hex.TextChanged+=(_,_)=> {
+            if(syncing||!OverlayDesign.IsColor(hex.Text))return;syncing=true;
+            var c=(Color)ColorConverter.ConvertFromString(hex.Text);sliders[0].Value=c.R;sliders[1].Value=c.G;sliders[2].Value=c.B;
+            swatch.Background=new SolidColorBrush(c);syncing=false;preview?.Invoke(hex.Text);
+        };
         panel.Children.Add(new TextBlock {Text="Ou digite #RRGGBB"});panel.Children.Add(hex);
         var error=new TextBlock {TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,0,0,8)};panel.Children.Add(error);
         var accept=new Button {Content="USAR COR",Padding=new Thickness(16,9,16,9),HorizontalAlignment=HorizontalAlignment.Right,IsDefault=true};
         accept.Click+=(_,_)=> {if(!OverlayDesign.IsColor(hex.Text)){error.Text="Use # seguido de seis caracteres hexadecimais.";hex.Focus();return;}window.DialogResult=true;};
-        panel.Children.Add(accept);Refresh();return window.ShowDialog()==true?hex.Text:null;
+        panel.Children.Add(accept);Refresh();if(window.ShowDialog()==true)return hex.Text;
+        preview?.Invoke(initial);return null;
     }
 }

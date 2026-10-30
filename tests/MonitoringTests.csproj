@@ -11,5 +11,6 @@
     <Compile Include="../GameDetection.cs" Link="GameDetection.cs" />
     <Compile Include="../LibGame.cs" Link="LibGame.cs" />
     <Compile Include="../OverlayDesign.cs" Link="OverlayDesign.cs" />
+    <Compile Include="../OverlayGameSession.cs" Link="OverlayGameSession.cs" />
   </ItemGroup>
 </Project>

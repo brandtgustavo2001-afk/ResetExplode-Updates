@@ -30,6 +30,15 @@ if(args.FirstOrDefault()=="--game-live") {
 
 int passed=0;
 void Check(bool result,string name){if(!result)throw new Exception(name);Console.WriteLine("PASS: "+name);passed++;}
+var session=new OverlayGameSession();var target=new OverlayGameTarget(new IntPtr(100),123,"Minecraft");
+var observed=new OverlayRowStyle();int changes=0;observed.PropertyChanged+=(_,_)=>changes++;
+observed.Color="#123456";observed.Color="#123456";observed.Size=150;
+Check(changes==2,"edicao de cor e tamanho notifica sem eventos duplicados");
+Check(session.Resolve(target,true,_=>true)==target,"jogo em primeiro plano inicia sessao");
+Check(session.Resolve(null,true,_=>true)==target,"Alt Tab preserva alvo do overlay");
+Check(session.Resolve(null,false,_=>true) is null,"opcao de ocultar ao sair continua disponivel");
+Check(session.Resolve(null,true,_=>false) is null,"fechar jogo remove alvo e overlay");
+Check(session.Resolve(null,true,_=>true) is null,"jogo fechado nao reaparece por alvo antigo");
 var design=OverlayDesign.Normalize(new OverlayDesign {FpsFirst=true,Rows=new(){new(){Key="CPU",Label="Processador",Color="#112233",Size=150,Template="{label}: {value}"}}});
 var plan=OverlayLayout.Arrange(design,new[]{new OverlayTextRow("CPU","CPU","50%  60 C"),new OverlayTextRow("FPS","","120 FPS")},16,true,"#FFFFFF",false,(text,size)=>(text.Length*size/2,size));
 Check(plan.Rows[0].Key=="FPS" && plan.Rows[1].Text=="Processador: 50%  60 C","ordem FPS e rotulo personalizado");
@@ -87,7 +96,9 @@ using(var view=map.CreateViewAccessor()) {
     using var overlay=new RtssOverlay(name);
     Check(overlay.GetFrames(12345) is {Fps:120},"FPS vem do processo correto no RTSS");
     Check(overlay.GetFrames(54321) is null,"nao publica RTSS em jogo sem hook");
-    view.Write(app+272,tick-6000);Check(overlay.GetFrames(12345) is null,"estatistica de frames antiga descartada");view.Write(app+272,tick);
+    view.Write(app+272,tick-6000);Check(overlay.GetFrames(12345) is null,"estatistica de frames antiga descartada");
+    Check(overlay.HasApplication(12345),"jogo pausado continua conectado para receber visual ao vivo");
+    Check(!overlay.HasApplication(54321),"PID desconhecido nao mantem sessao RTSS");view.Write(app+272,tick);
     Check(overlay.Publish("GPU 60 C\nCPU 58 C"),"publicacao em slot RTSS proprio");
     var owner=new byte[256];view.ReadArray(40+256,owner,0,256);
     Check(Encoding.ASCII.GetString(owner).StartsWith("MSIAfterburner"),"slot primario do MSI preservado");

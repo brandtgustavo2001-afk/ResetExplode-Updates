@@ -13,6 +13,16 @@ public sealed class GameDetection
     private int _lastPid;
     private string _lastPath = "", _lastName = "";
     private DateTime _pathAt;
+    private readonly OverlayGameSession _session=new();
+    public OverlayGameTarget? ForOverlay(IEnumerable<string> manual,bool keep)
+    {
+        var foreground=Foreground(manual);
+        return _session.Resolve(foreground.HasValue?new OverlayGameTarget(foreground.Value.Window,foreground.Value.Pid,foreground.Value.Name):null,keep,target=> {
+            if(!IsWindow(target.Window))return false;
+            GetWindowThreadProcessId(target.Window,out uint pid);return pid==target.Pid;
+        });
+    }
+    [DllImport("user32.dll")] private static extern bool IsWindow(IntPtr window);
     public void SetLibrary(IEnumerable<LibGame> games) => _games = games.ToArray();
     private static readonly HashSet<string> Desktop = new(StringComparer.OrdinalIgnoreCase)
     { "explorer", "chrome", "msedge", "firefox", "brave", "opera", "discord", "steam", "steamwebhelper", "epicgameslauncher", "obs64", "dwm", "ResetExplode", "Validation" };

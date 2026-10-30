@@ -80,6 +80,7 @@ public sealed class AppSettings
 
     // Overlay
     public bool OverlayEnabled { get; set; }
+    public bool OverlayKeepWhenUnfocused { get; set; } = true;
     public OverlayDesign OverlayDesign { get; set; } = new();
     public string OverlayEngine { get; set; } = "Auto";
     public bool OverlayUseAfterburner { get; set; }

@@ -4,17 +4,24 @@ using System.Text.RegularExpressions;
 
 namespace ResetExplode;
 
-public sealed class OverlayRowStyle
+public sealed class OverlayRowStyle : System.ComponentModel.INotifyPropertyChanged
 {
-    public string Key { get; set; } = "";
-    public string Label { get; set; } = "";
-    public string Color { get; set; } = "#FFFFFF";
-    public double Size { get; set; } = 100;
-    public double X { get; set; }
-    public double Y { get; set; }
-    public string Template { get; set; } = "{label}  {value}";
+    public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+    private string _label="",_color="#FFFFFF",_template="{label}  {value}";
+    private double _size=100,_x,_y;
+    private void Set<T>(ref T field,T value,[System.Runtime.CompilerServices.CallerMemberName]string? name=null) {
+        if(EqualityComparer<T>.Default.Equals(field,value))return;field=value;PropertyChanged?.Invoke(this,new(name));
+    }
+    public string Key {get;set;}="";
+    public string Label {get=>_label;set=>Set(ref _label,value);}
+    public string Color {get=>_color;set=>Set(ref _color,value);}
+    public double Size {get=>_size;set=>Set(ref _size,value);}
+    public double X {get=>_x;set=>Set(ref _x,value);}
+    public double Y {get=>_y;set=>Set(ref _y,value);}
+    public string Template {get=>_template;set=>Set(ref _template,value);}
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string DisplayName=>Key switch {"GPU"=>"Placa de vídeo", "VRAM"=>"Memória de vídeo", "CPU"=>"Processador", "RAM"=>"Memória RAM", "FPS"=>"FPS e fluidez", "GAME"=>"Nome do jogo", _=>"Relógio"};
 }
-
 /// <summary>Shared layout model for the RTSS publisher, desktop fallback and preview.</summary>
 public sealed class OverlayDesign
 {
