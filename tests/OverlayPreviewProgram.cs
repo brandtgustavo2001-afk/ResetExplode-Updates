@@ -24,6 +24,12 @@ static class Preview
         var application=new Application {ShutdownMode=ShutdownMode.OnExplicitShutdown};
         application.Resources.MergedDictionaries.Add(new ResourceDictionary {Source=new Uri("pack://application:,,,/ResetExplode;component/Theme.xaml")});
         ThemeManager.Apply(false);
+        var component=new TextBlock {Text="Intel Core i7-14700K",TextTrimming=TextTrimming.CharacterEllipsis,Width=30};
+        CopyableText.Attach(component);
+        if(CopyableText.Read(component)!="Intel Core i7-14700K"||((MenuItem)component.ContextMenu.Items[0]).Header?.ToString()!="Copiar texto")throw new Exception("Copia do componente incompleta");
+        var rich=new TextBlock();rich.Inlines.Add(new System.Windows.Documents.Run("NVIDIA "));rich.Inlines.Add(new System.Windows.Documents.Run("GeForce RTX 5070"));
+        if(CopyableText.Read(rich)!="NVIDIA GeForce RTX 5070")throw new Exception("Texto formatado incompleto");
+        Console.WriteLine("PASS: copia preserva nomes completos e texto formatado.");
         if(args.FirstOrDefault()=="--designer"||File.Exists(Path.Combine(Environment.CurrentDirectory,"MainWindow.xaml"))) {
             bool designer=args.FirstOrDefault()=="--designer";
             var xml=System.Xml.Linq.XDocument.Load(designer?args[1]:Path.Combine(Environment.CurrentDirectory,"MainWindow.xaml"));System.Xml.Linq.XNamespace ns="http://schemas.microsoft.com/winfx/2006/xaml/presentation";

@@ -622,6 +622,7 @@
                         <StackPanel Margin="0,0,200,0">
                             <TextBlock Text="Sistema" Style="{StaticResource H1}"/>
                             <TextBlock x:Name="SystemSub" Text="Hardware e software detectados" Style="{StaticResource Sub}" TextWrapping="Wrap"/>
+                            <TextBlock Text="Para copiar um nome ou informação, clique no texto com o botão direito e escolha Copiar texto." Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,8,0,0"/>
                         </StackPanel>
                         <Button x:Name="BtnReport" Style="{StaticResource OutlineButton}" Content="EXPORTAR RELATÓRIO" Padding="16,9"
                                 HorizontalAlignment="Right" VerticalAlignment="Top" Click="BtnReport_Click"

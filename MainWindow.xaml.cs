@@ -83,6 +83,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        CopyableText.Enable(this);
         SideVersion.Text = "v" + typeof(MainWindow).Assembly.GetName().Version?.ToString(3);
         InitUpdates();
         InitEnergyUsage();
