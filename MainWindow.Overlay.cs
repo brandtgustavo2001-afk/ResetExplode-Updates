@@ -7,6 +7,7 @@ namespace ResetExplode;
 /// <summary>Overlay: o que mostrar (escolhido na aba Overlay) e a montagem das linhas de sensores.</summary>
 public partial class MainWindow
 {
+    private readonly Dictionary<string,string> _overlayMetricValues=new();
     private HashSet<string>? _ovShow;
     private HashSet<string> OvShow => _ovShow ??= _settings.OverlayItems is { } l ? l.ToHashSet() : OverlayMetrics.Defaults();
 
@@ -89,6 +90,8 @@ public partial class MainWindow
     /// <summary>Monta as linhas GPU / VRAM / CPU / RAM só com o que foi escolhido; linha vazia não aparece.</summary>
     private List<OverlayLine> BuildOverlayLines(FrameStats? f)
     {
+        _overlayMetricValues.Clear();
+        void Add(List<string> parts,string key,string value) { _overlayMetricValues[key]=value;parts.Add(value); }
         var show = OvShow;
         var s = BottleneckAnalyzer.Sample(_monitor, _gpus.FirstOrDefault(), f);
         var lines = new List<OverlayLine>();
@@ -103,40 +106,40 @@ public partial class MainWindow
         }
 
         var gpu = new List<string>();
-        if (show.Contains("gpu_load")) gpu.Add(P(G(0x30)??s.GpuLoad));
-        if (show.Contains("gpu_temp")) gpu.Add(T(G(0)??s.GpuTemp));
-        if (show.Contains("gpu_hotspot")) gpu.Add("HS " + T(GpuRow(SensorType.Temperature, "GPU Hot Spot")?.RawValue));
-        if (show.Contains("gpu_clock")) gpu.Add(G(0x20) is float ec ? $"{ec:0} MHz" : MainGpuClock(Nvml.ClockGraphics, "GPU Core") is uint c ? $"{c} MHz" : "— MHz");
-        if (show.Contains("gpu_memclock")) gpu.Add(G(0x22) is float emc ? $"mem {emc:0} MHz" : MainGpuClock(Nvml.ClockMem, "GPU Memory") is uint mc ? $"mem {mc} MHz" : "mem —");
-        if (show.Contains("gpu_power")) gpu.Add((G(0x61)??MainGpuPower()) is float w ? $"{w:0} W" : "— W");
-        if (show.Contains("gpu_volt")) gpu.Add(GpuRow(SensorType.Voltage, "GPU Core")?.RawValue is float v ? $"{v:0.000} V" : "— V");
+        if (show.Contains("gpu_load")) Add(gpu,"gpu_load",P(G(0x30)??s.GpuLoad));
+        if (show.Contains("gpu_temp")) Add(gpu,"gpu_temp",T(G(0)??s.GpuTemp));
+        if (show.Contains("gpu_hotspot")) Add(gpu,"gpu_hotspot","HS " + T(GpuRow(SensorType.Temperature, "GPU Hot Spot")?.RawValue));
+        if (show.Contains("gpu_clock")) Add(gpu,"gpu_clock",G(0x20) is float ec ? $"{ec:0} MHz" : MainGpuClock(Nvml.ClockGraphics, "GPU Core") is uint c ? $"{c} MHz" : "— MHz");
+        if (show.Contains("gpu_memclock")) Add(gpu,"gpu_memclock",G(0x22) is float emc ? $"mem {emc:0} MHz" : MainGpuClock(Nvml.ClockMem, "GPU Memory") is uint mc ? $"mem {mc} MHz" : "mem —");
+        if (show.Contains("gpu_power")) Add(gpu,"gpu_power",(G(0x61)??MainGpuPower()) is float w ? $"{w:0} W" : "— W");
+        if (show.Contains("gpu_volt")) Add(gpu,"gpu_volt",GpuRow(SensorType.Voltage, "GPU Core")?.RawValue is float v ? $"{v:0.000} V" : "— V");
         if (show.Contains("gpu_fan"))
-            gpu.Add(G(0x11) is float erpm ? $"{erpm:0} RPM" : G(0x10) is float epct ? $"fan {epct:0}%" : GpuRow(SensorType.Fan, "GPU Fan", true)?.RawValue is float rpm && rpm > 0 ? $"{rpm:0} RPM"
+            Add(gpu,"gpu_fan",G(0x11) is float erpm ? $"{erpm:0} RPM" : G(0x10) is float epct ? $"fan {epct:0}%" : GpuRow(SensorType.Fan, "GPU Fan", true)?.RawValue is float rpm && rpm > 0 ? $"{rpm:0} RPM"
                   : GpuRow(SensorType.Control, "GPU Fan", true)?.RawValue is float pct ? $"fan {pct:0}%" : "fan —");
-        if (show.Contains("gpu_perfcap") && MainGpuPerfCap() is { Length: > 0 } cap) gpu.Add(cap);
+        if (show.Contains("gpu_perfcap") && MainGpuPerfCap() is { Length: > 0 } cap) Add(gpu,"gpu_perfcap",cap);
         Line("GPU", gpu);
 
         var vram = new List<string>();
         var vr = MainGpuVram();
-        if (show.Contains("vram_used")) vram.Add(G(0x31) is float em ? $"{em/1024:0.0} GB" : vr is { } a ? $"{a.Used:0.0} GB" : "—");
-        if (show.Contains("vram_pct")) vram.Add(P(s.VramPct));
-        if (show.Contains("vram_temp")) vram.Add(T(GpuRow(SensorType.Temperature, "GPU Memory")?.RawValue));
+        if (show.Contains("vram_used")) Add(vram,"vram_used",G(0x31) is float em ? $"{em/1024:0.0} GB" : vr is { } a ? $"{a.Used:0.0} GB" : "—");
+        if (show.Contains("vram_pct")) Add(vram,"vram_pct",P(s.VramPct));
+        if (show.Contains("vram_temp")) Add(vram,"vram_temp",T(GpuRow(SensorType.Temperature, "GPU Memory")?.RawValue));
         Line("VRAM", vram);
 
         var cpu = new List<string>();
         var (avg, max) = CpuClocks();
-        if (show.Contains("cpu_load")) cpu.Add(P(external.Global(0x90,"CPU usage")??s.CpuTotal));
-        if (show.Contains("cpu_maxcore")) cpu.Add(s.CpuMaxCore is float mx ? $"núcleo {mx:0}%" : "núcleo —");
-        if (show.Contains("cpu_temp")) cpu.Add(T(external.Global(0x80,"CPU temperature")??s.CpuTemp));
-        if (show.Contains("cpu_clock")) cpu.Add((external.Global(0xA0,"CPU clock")??avg) is float ca ? $"{ca / 1000:0.00} GHz" : "— GHz");
-        if (show.Contains("cpu_clockmax")) cpu.Add(max is float cm ? $"pico {cm / 1000:0.00} GHz" : "pico —");
-        if (show.Contains("cpu_power")) cpu.Add((external.Global(0x100,"CPU power")??_monitor.CpuPower) is float cw && cw > 0 ? $"{cw:0} W" : "— W");
+        if (show.Contains("cpu_load")) Add(cpu,"cpu_load",P(external.Global(0x90,"CPU usage")??s.CpuTotal));
+        if (show.Contains("cpu_maxcore")) Add(cpu,"cpu_maxcore",s.CpuMaxCore is float mx ? $"núcleo {mx:0}%" : "núcleo —");
+        if (show.Contains("cpu_temp")) Add(cpu,"cpu_temp",T(external.Global(0x80,"CPU temperature")??s.CpuTemp));
+        if (show.Contains("cpu_clock")) Add(cpu,"cpu_clock",(external.Global(0xA0,"CPU clock")??avg) is float ca ? $"{ca / 1000:0.00} GHz" : "— GHz");
+        if (show.Contains("cpu_clockmax")) Add(cpu,"cpu_clockmax",max is float cm ? $"pico {cm / 1000:0.00} GHz" : "pico —");
+        if (show.Contains("cpu_power")) Add(cpu,"cpu_power",(external.Global(0x100,"CPU power")??_monitor.CpuPower) is float cw && cw > 0 ? $"{cw:0} W" : "— W");
         Line("CPU", cpu);
 
         var ram = new List<string>();
         var (total, availB) = Optimizer.MemoryStatus();
-        if (show.Contains("ram_used")) ram.Add(total > 0 ? $"{(total - availB) / 1073741824.0:0.0} GB" : "—");
-        if (show.Contains("ram_pct")) ram.Add(P(s.RamPct));
+        if (show.Contains("ram_used")) Add(ram,"ram_used",total > 0 ? $"{(total - availB) / 1073741824.0:0.0} GB" : "—");
+        if (show.Contains("ram_pct")) Add(ram,"ram_pct",P(s.RamPct));
         Line("RAM", ram);
         var order = _settings.OverlayOrder.Split(',').Select(s => s.Trim().ToUpperInvariant()).ToList();
         return lines.OrderBy(line => order.IndexOf(line.Label) is var index && index >= 0 ? index : int.MaxValue).ToList();

@@ -1598,7 +1598,7 @@
                                     </ComboBox>
                                     <TextBlock x:Name="OvRtssStatus" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,8,0,6"/>
                                     <Button Content="ABRIR RIVATUNER (RTSS)" Style="{StaticResource OutlineButton}" HorizontalAlignment="Left" Click="OvOpenRtss_Click"/>
-                                    <TextBlock Text="No modo RTSS, posição, fonte e tamanho são ajustados no RivaTuner. As métricas e cores vêm do ResetExplode. O RTSS precisa detectar o jogo e ter o OSD habilitado em seu perfil. O gráfico de frametime abaixo pertence ao modo janela." Foreground="{DynamicResource Faint}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                    <TextBlock Text="Fonte, tamanho, cores, fundo e posição são personalizados aqui, inclusive no RTSS. O RivaTuner precisa detectar o jogo e ter o OSD habilitado. O gráfico de frametime permanece no modo janela; contorno e efeitos globais do RTSS podem ser ajustados no RivaTuner." Foreground="{DynamicResource Faint}" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -1660,9 +1660,9 @@
                                     </DataGrid.Columns>
                                 </DataGrid>
                                 <Button Content="ZERAR MÍNIMOS E MÁXIMOS DO MSI" Click="OvResetMsi_Click" Style="{StaticResource OutlineButton}" HorizontalAlignment="Left" Margin="0,8,0,16"/>
-                                <CheckBox x:Name="OvComponentColors" Content="Cores por componente: GPU verde, VRAM azul, CPU laranja, RAM violeta e FPS amarelo" Margin="0,0,0,12"/>
+                                <CheckBox x:Name="OvComponentColors" Content="Usar as cores de cada linha (personalize na tabela abaixo)" Margin="0,0,0,12"/>
                                 <WrapPanel>
-                                    <StackPanel Margin="0,0,24,12"><TextBlock Text="Fonte"/><ComboBox x:Name="OvFont" Width="150"><ComboBoxItem Content="Consolas" IsSelected="True"/><ComboBoxItem Content="Cascadia Mono"/><ComboBoxItem Content="Segoe UI"/></ComboBox></StackPanel>
+                                    <StackPanel Margin="0,0,24,12"><TextBlock Text="Fonte instalada"/><ComboBox x:Name="OvFont" IsEditable="True" Width="170"><ComboBoxItem Content="Consolas" IsSelected="True"/><ComboBoxItem Content="Cascadia Mono"/><ComboBoxItem Content="Segoe UI"/><ComboBoxItem Content="Arial"/><ComboBoxItem Content="Tahoma"/><ComboBoxItem Content="Unispace"/></ComboBox></StackPanel>
                                     <StackPanel Margin="0,0,24,12"><TextBlock Text="Tamanho da fonte"/><Slider x:Name="OvFontSize" Minimum="9" Maximum="26" Value="12" Width="140" TickFrequency="1" IsSnapToTickEnabled="True"/></StackPanel>
                                     <StackPanel Margin="0,0,24,12"><TextBlock Text="Cor #RRGGBB"/><TextBox x:Name="OvColor" Text="#F5F5F5" Width="120"/></StackPanel>
                                     <StackPanel Margin="0,0,24,12"><TextBlock Text="Opacidade do fundo"/><Slider x:Name="OvOpacity" Minimum="0" Maximum="100" Value="78" Width="140"/></StackPanel>
@@ -1674,6 +1674,36 @@
                                     <StackPanel Margin="0,0,24,12"><TextBlock Text="Ordem das linhas"/><TextBox x:Name="OvOrder" Text="GPU,VRAM,CPU,RAM" Width="240"/></StackPanel>
                                 </WrapPanel>
                                 <WrapPanel Margin="0,0,0,12"><CheckBox x:Name="OvBorder" Content="Borda" IsChecked="True" Margin="0,0,24,0"/><CheckBox x:Name="OvBigFps" Content="FPS em destaque" IsChecked="True"/></WrapPanel>
+                                <WrapPanel Margin="0,0,0,12">
+                                    <CheckBox x:Name="OvBold" Content="Negrito" Margin="0,0,24,0"/>
+                                    <CheckBox x:Name="OvFpsFirst" Content="FPS antes dos sensores" Margin="0,0,24,0"/>
+                                    <CheckBox x:Name="OvFreeLayout" Content="Posição livre por linha (X / Y)"/>
+                                </WrapPanel>
+                                <WrapPanel>
+                                    <StackPanel Margin="0,0,24,12"><TextBlock Text="Cor do fundo #RRGGBB"/><TextBox x:Name="OvBackground" Width="150"/></StackPanel>
+                                    <StackPanel Margin="0,0,24,12"><TextBlock Text="Espaço entre linhas (px)"/><TextBox x:Name="OvLineSpacing" Width="150"/></StackPanel>
+                                    <StackPanel Margin="0,0,24,12"><TextBlock Text="Separador das métricas"/><ComboBox x:Name="OvSeparator" Width="150"><ComboBoxItem Content="Espaços"/><ComboBoxItem Content="Barra |"/><ComboBoxItem Content="Barra /"/></ComboBox></StackPanel>
+                                    <StackPanel Margin="0,0,24,12"><TextBlock Text="Nome do jogo (opcional)"/><TextBox x:Name="OvGameAlias" Width="210" MaxLength="64"/></StackPanel>
+                                </WrapPanel>
+                                <Expander Header="Editar cada linha: nome, cor, tamanho, texto e posição" IsExpanded="True" Margin="0,0,0,12" Foreground="{DynamicResource Fg}">
+                                    <StackPanel Margin="0,10,0,0">
+                                        <TextBlock Text="Tamanho em % da fonte principal. X/Y em pixels com posição livre marcada. Use {label} e {value}, ou monte a linha com métricas: CPU {cpu_temp} | {cpu_load}. Ative as métricas desejadas acima. Apagar o formato oculta a linha." Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                        <DataGrid x:Name="OvRowStyles" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" HeadersVisibility="Column" MinHeight="220" Background="{DynamicResource Card}" Foreground="{DynamicResource Fg}" RowBackground="{DynamicResource Card}" AlternatingRowBackground="{DynamicResource Card}" HorizontalScrollBarVisibility="Auto">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="Linha" Binding="{Binding Key}" IsReadOnly="True" Width="65"/>
+                                                <DataGridTextColumn Header="Nome" Binding="{Binding Label}" Width="110"/>
+                                                <DataGridTextColumn Header="Cor #RRGGBB" Binding="{Binding Color}" Width="105"/>
+                                                <DataGridTextColumn Header="Tamanho %" Binding="{Binding Size, ValidatesOnExceptions=True}" Width="90"/>
+                                                <DataGridTextColumn Header="X" Binding="{Binding X, ValidatesOnExceptions=True}" Width="65"/>
+                                                <DataGridTextColumn Header="Y" Binding="{Binding Y, ValidatesOnExceptions=True}" Width="65"/>
+                                                <DataGridTextColumn Header="Formato" Binding="{Binding Template}" Width="*" MinWidth="180"/>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                        <Expander Header="Ver nomes disponíveis para montar o formato" Foreground="{DynamicResource Muted}" Margin="0,8,0,0"><TextBlock x:Name="OvTemplateHelp" TextWrapping="Wrap" Margin="0,8,0,8"/></Expander>
+                                    </StackPanel>
+                                </Expander>
+                                <WrapPanel Margin="0,0,0,12"><Button Content="IMPORTAR ESTILO" Click="OvImportStyle_Click" Style="{StaticResource OutlineButton}"/><Button Content="EXPORTAR ESTILO" Click="OvExportStyle_Click" Style="{StaticResource OutlineButton}" Margin="12,0,0,0"/><Button Content="REDEFINIR LINHAS" Click="OvResetRows_Click" Style="{StaticResource OutlineButton}" Margin="12,0,0,0"/></WrapPanel>
+                                <WrapPanel Margin="0,0,0,12"><Button Content="COR DA LINHA SELECIONADA" Tag="Line" Click="OvPickColor_Click" Style="{StaticResource OutlineButton}"/><Button Content="COR DO FUNDO" Tag="Background" Click="OvPickColor_Click" Style="{StaticResource OutlineButton}" Margin="12,0,0,0"/><Button Content="COR ÚNICA DO TEXTO" Tag="Text" Click="OvPickColor_Click" Style="{StaticResource OutlineButton}" Margin="12,0,0,0"/></WrapPanel>
                                 <Button Content="APLICAR E ATUALIZAR PRÉVIA" Click="OvAppearanceApply_Click" Style="{StaticResource OutlineButton}" HorizontalAlignment="Left"/>
                                 <TextBlock x:Name="OvAppearanceStatus" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,8,0,12"/>
                                 <Border x:Name="OvPreviewBox" BorderBrush="{DynamicResource Muted}" BorderThickness="1" Padding="12" HorizontalAlignment="Left"><TextBlock x:Name="OvPreviewText" Text="Prévia do overlay"/></Border>

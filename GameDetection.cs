@@ -76,6 +76,10 @@ public sealed class GameDetection
     private static extern bool QueryFullProcessImageName(SafeProcessHandle process, uint flags, StringBuilder path, ref uint size);
 
     [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+    public static (int Width,int Height) ClientSize(IntPtr window)
+        => GetClientRect(window,out var rect)?(Math.Max(1,rect.Right),Math.Max(1,rect.Bottom)):(1920,1080);
+    [StructLayout(LayoutKind.Sequential)] private struct ClientRect { public int Left,Top,Right,Bottom; }
+    [DllImport("user32.dll")] private static extern bool GetClientRect(IntPtr window,out ClientRect rect);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(IntPtr hwnd, StringBuilder text, int count);
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint pid);
 }

@@ -61,25 +61,13 @@ public partial class MainWindow
         try { Process.Start(new ProcessStartInfo(file){UseShellExecute=true}); }
         catch(Exception ex){AppDiagnostics.Log("Abrir RTSS",ex);OvRtssStatus.Text="Não foi possível abrir o RTSS: "+ex.Message;}
     }
-    private string BuildRtssText(FrameStats? frames,IReadOnlyList<OverlayLine> lines,string game,RtssFrameSample? rtssFrames)
+    private string BuildRtssText(FrameStats? frames,IReadOnlyList<OverlayLine> lines,string game,RtssFrameSample? rtssFrames,IntPtr window)
     {
-        // Data strings are not allowed to inject RTSS formatting commands.
-        static string Clean(string value)=>value.Replace('<','(').Replace('>',')').Replace('\r',' ').Replace('\n',' ');
-        var text=new StringBuilder();
-        foreach(var line in lines) {
-            string color=_settings.OverlayComponentColors?line.Accent:_settings.OverlayColor;
-            text.Append("<C=").Append(color.TrimStart('#')).Append('>');
-            text.Append(Clean(line.Label).PadRight(5)).Append(' ').Append(Clean(line.Value)).Append("<C>\n");
-        }
-        if(frames is not null || rtssFrames is not null) {
-            var fps=new List<string>();
-            if(OvShow.Contains("fps"))fps.Add($"{rtssFrames?.Fps??frames!.Fps:0} FPS");
-            if(OvShow.Contains("frametime"))fps.Add($"{rtssFrames?.FrameTimeMs??frames!.FrameTimeMs:0.0} ms");
-            if(OvShow.Contains("low1") && frames is not null)fps.Add($"1% low {frames.Low1Fps:0}");
-            if(fps.Count>0)text.Append("<C=FFFF66>").AppendJoin("  ",fps).Append("<C>\n");
-        }
-        if(OvShow.Contains("game"))text.Append(Clean(game)).Append('\n');
-        if(OvShow.Contains("clock"))text.Append(DateTime.Now.ToString("HH:mm"));
-        return text.ToString().TrimEnd();
+        var rows=OverlayPresentation.Rows(_settings,lines,frames,rtssFrames,OvShow,game,DateTime.Now.ToString("HH:mm"),_overlayMetricValues);
+        var plan=OverlayPresentation.Plan(_settings,rows);
+        var size=GameDetection.ClientSize(window);
+        return OverlayLayout.Rtss(plan,_settings.OverlayFont,_settings.OverlayFontSize,_settings.OverlayDesign.Bold,_settings.OverlayScale,
+            _settings.OverlayCorner,_settings.OverlayOffsetX,_settings.OverlayOffsetY,size.Width,size.Height,
+            _settings.OverlayDesign.Background,_settings.OverlayBackgroundOpacity,_settings.OverlayBorder);
     }
 }

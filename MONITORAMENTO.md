@@ -29,3 +29,13 @@ O RTSS precisa estar instalado, aberto, com OSD ativo e autorizado a detectar o 
 Testes: dotnet run --project tests/MonitoringTests.csproj -c Release. Cobrem os layouts documentados, identidade de GPU, temperatura agregada, amostras antigas, offsets/contagens invalidos, FLT_MAX, estatisticas do PID correto, reserva de slots, trava concorrente e liberacao do slot.
 
 Provas locais adicionais: --live le os sensores reais do MSI; --rtss-live publica e limpa um texto de teste no RTSS instalado. Esses testes de comunicacao nao substituem a validacao visual em cada jogo/API.
+
+## Personalizacao 0.16.16
+
+Em Aparencia e previa, escolha fonte instalada, tamanho, cor unica ou por linha, negrito, fundo/opacidade, borda, canto, deslocamento e espacamento. A tabela permite alterar nome, cor RGB, escala por linha, formato e X/Y. Posicao livre usa X/Y relativos ao bloco, mantendo o canto e deslocamento globais. Sem posicao livre, as linhas seguem a ordem GPU/VRAM/CPU/RAM e a opcao FPS antes dos sensores.
+
+O formato aceita {label}, {value} e chaves de metricas, como CPU {cpu_temp} | {cpu_load}. Ative as metricas na selecao acima; dados indisponiveis aparecem sem valor real. Um formato vazio oculta aquela linha. O nome javaw e apresentado como Minecraft, com nome manual opcional.
+
+O mesmo modelo monta a previa, o overlay em janela e o texto RTSS. RTSS usa o SDK do OverlayEditor: FNT para fonte base (zoom 1), S para escala por linha, P/L para posicao/camada, E/B para fundo e borda, C para cor. O tamanho do cliente do jogo determina os cantos. Nao escreve perfis globais ou do jogo. Contorno/sombra globais do RTSS permanecem sob controle do RivaTuner e o grafico de frametime permanece no modo Janela. A previa e ilustrativa; rasterizacao pode variar conforme o renderizador e o DPI.
+
+Importar/exportar grava JSON formato ResetExplode.OverlayStyle versao 1, limitado a 64 KB na importacao. Somente propriedades explicitas de aparencia/metricas sao transferidas. API, inicializacao do Windows, atualizacoes, configuracoes de energia e historico ficam fora do arquivo. Perfis invalidos nao sao aplicados; cores, limites, fontes e texto sao normalizados. Texto arbitrario nao injeta tags do RTSS.

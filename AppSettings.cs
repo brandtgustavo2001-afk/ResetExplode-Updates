@@ -80,6 +80,7 @@ public sealed class AppSettings
 
     // Overlay
     public bool OverlayEnabled { get; set; }
+    public OverlayDesign OverlayDesign { get; set; } = new();
     public string OverlayEngine { get; set; } = "Auto";
     public bool OverlayUseAfterburner { get; set; }
     public string OverlayCorner { get; set; } = "TL";
@@ -177,9 +178,12 @@ public sealed class AppSettings
         settings.OverlayBackgroundOpacity = double.IsFinite(settings.OverlayBackgroundOpacity) ? Math.Clamp(settings.OverlayBackgroundOpacity, 0, 1) : .78;
         settings.OverlayOffsetX = double.IsFinite(settings.OverlayOffsetX) ? Math.Clamp(settings.OverlayOffsetX, 0, 1000) : 12;
         settings.OverlayOffsetY = double.IsFinite(settings.OverlayOffsetY) ? Math.Clamp(settings.OverlayOffsetY, 0, 1000) : 12;
-        settings.OverlayFont = settings.OverlayFont is "Consolas" or "Cascadia Mono" or "Segoe UI" ? settings.OverlayFont : "Consolas";
+        settings.OverlayFont = ResetExplode.OverlayDesign.IsFont(settings.OverlayFont) ? settings.OverlayFont : "Consolas";
+        settings.OverlayDesign = ResetExplode.OverlayDesign.Normalize(settings.OverlayDesign);
         if (!System.Text.RegularExpressions.Regex.IsMatch(settings.OverlayColor ?? "", "^#[0-9a-fA-F]{6}$")) settings.OverlayColor = "#F5F5F5";
         settings.OverlayOrder ??= "GPU,VRAM,CPU,RAM";
+        var overlayOrder=settings.OverlayOrder.Split(',').Select(s=>s.Trim().ToUpperInvariant()).ToArray();
+        settings.OverlayOrder=overlayOrder.Length==4&&overlayOrder.ToHashSet().SetEquals(new[]{"GPU","VRAM","CPU","RAM"})?string.Join(',',overlayOrder):"GPU,VRAM,CPU,RAM";
         settings.OverlayIntervalMs = Math.Clamp(settings.OverlayIntervalMs, 100, 2000);
         settings.OverlayGameExecutables = (settings.OverlayGameExecutables ?? new()).Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
         if (settings.OverlayHotkeyKey < 0x08 || settings.OverlayHotkeyKey > 0xFE || (settings.OverlayHotkeyModifiers & 7) == 0)

@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -18,7 +19,7 @@ public partial class OverlayWindow : Window
     public static readonly DependencyProperty UseComponentColorsProperty = DependencyProperty.Register(nameof(UseComponentColors), typeof(bool), typeof(OverlayWindow), new PropertyMetadata(true));
     public bool UseComponentColors { get => (bool)GetValue(UseComponentColorsProperty); set => SetValue(UseComponentColorsProperty, value); }
     private double _offsetX = 12, _offsetY = 12;
-    private string _textColor="#F5F5F5";
+    private AppSettings _appearance = new();
 
     private IntPtr _hwnd, _hook;
     private IntPtr _monitor;                  // monitor do jogo (o da última janela ativa de outro programa)
@@ -57,22 +58,11 @@ public partial class OverlayWindow : Window
 
     public void ApplyAppearance(AppSettings settings)
     {
-        UseComponentColors = settings.OverlayComponentColors;
-        _textColor=settings.OverlayColor;
-        OverlayTextRoot.SetValue(System.Windows.Documents.TextElement.FontWeightProperty,FontWeights.Bold);
-        OverlayTextRoot.Effect=new System.Windows.Media.Effects.DropShadowEffect {Color=Colors.Black,BlurRadius=2,ShadowDepth=1,Opacity=1};
-        OverlayTextRoot.SetValue(System.Windows.Documents.TextElement.FontFamilyProperty, new FontFamily(settings.OverlayFont));
-        OverlayTextRoot.SetValue(System.Windows.Documents.TextElement.FontSizeProperty, settings.OverlayFontSize);
-        OverlayTextRoot.SetValue(System.Windows.Documents.TextElement.ForegroundProperty,
-            new SolidColorBrush((Color)ColorConverter.ConvertFromString(settings.OverlayColor)));
-        SetValue(System.Windows.Documents.TextElement.ForegroundProperty,
-            new SolidColorBrush((Color)ColorConverter.ConvertFromString(settings.OverlayColor)));
-        OFpsRow.SetValue(System.Windows.Documents.TextElement.ForegroundProperty,
-            new SolidColorBrush((Color)ColorConverter.ConvertFromString(settings.OverlayComponentColors ? "#FFFF66" : settings.OverlayColor)));
-        OLow.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(settings.OverlayComponentColors ? "#FFFF99" : settings.OverlayColor));
-        OFps.FontSize = settings.OverlayBigFps ? settings.OverlayFontSize * 1.5 : settings.OverlayFontSize;
-        Box.Background = new SolidColorBrush(Color.FromArgb((byte)(settings.OverlayBackgroundOpacity * 255), 0, 0, 0));
-        Box.BorderThickness = new Thickness(settings.OverlayBorder ? 1 : 0);
+        _appearance=settings;Box.Padding=new Thickness(0);
+        var background=(Color)ColorConverter.ConvertFromString(settings.OverlayDesign.Background);
+        background.A=(byte)(settings.OverlayBackgroundOpacity*255);
+        Box.Background=new SolidColorBrush(background);
+        Box.BorderThickness=new Thickness(settings.OverlayBorder?1:0);
         _offsetX = settings.OverlayOffsetX; _offsetY = settings.OverlayOffsetY;
         SetScale(settings.OverlayScale);
     }
@@ -121,44 +111,20 @@ public partial class OverlayWindow : Window
     }
 
     /// <summary>Atualiza o overlay. <paramref name="show"/> = itens escolhidos (chaves de OverlayMetrics).</summary>
-    public void Update(FrameStats? f, IReadOnlyList<OverlayLine> lines, IReadOnlySet<string> show, string? extra, string? gameName = null)
+    public void Update(FrameStats? f, IReadOnlyList<OverlayLine> lines, IReadOnlySet<string> show, string? extra, string? gameName = null,IReadOnlyDictionary<string,string>? metrics=null)
     {
-        static Visibility V(bool on) => on ? Visibility.Visible : Visibility.Collapsed;
-        bool fps = show.Contains("fps"), ft = show.Contains("frametime");
-        OFpsRow.Visibility = V(fps || ft);
-        OFps.Visibility = OFpsUnit.Visibility = V(fps);
-        OFrameTime.Visibility = V(ft);
-        OFrameTime.Margin = new Thickness(fps ? 18 : 0, 0, 0, 0);
-        OLow.Visibility = V(show.Contains("low1"));
-        OGraph.Visibility = V(show.Contains("graph"));
-
-        if (f != null)
-        {
-            OFps.Text = $"{f.Fps:0}";
-            OFrameTime.Text = $"{f.FrameTimeMs:0.0} ms";
-            OLow.Text = $"1% low {f.Low1Fps:0}";
+        var rows=OverlayPresentation.Rows(_appearance,lines,f,null,show,gameName??f?.ProcessName,extra,metrics);
+        var plan=OverlayPresentation.Plan(_appearance,rows);
+        var canvas=OverlayPresentation.Canvas(_appearance,plan);
+        if(show.Contains("graph")) {
+            if(OGraph.Parent is Panel previous)previous.Children.Remove(OGraph);
+            OGraph.Visibility=Visibility.Visible;OGraph.Margin=new Thickness(0);
+            Canvas.SetLeft(OGraph,8);Canvas.SetTop(OGraph,plan.Height);
+            canvas.Children.Add(OGraph);canvas.Width=Math.Max(canvas.Width,276);canvas.Height+=42;
+            DrawGraph(f?.RecentFrameTimes);
         }
-        else
-        {
-            OFps.Text = "—";
-            OFrameTime.Text = fps ? "" : "— ms";
-            OLow.Text = "aguardando jogo";
-        }
-        // Rodapé: nome do jogo e/ou hora.
-        var foot = new List<string>();
-        if (show.Contains("game") && (f != null || gameName != null)) foot.Add(f?.ProcessName ?? gameName!);
-        if (extra != null) foot.Add(extra);
-        OGame.Text = string.Join("  ·  ", foot);
-        OGame.Visibility = V(foot.Count > 0);
-
-        var visibleLines = lines.Where(line => line.Parts.Count > 0).ToArray();
-        ORows.ItemsSource = visibleLines.Select(line=>new {
-            line.Label,line.Parts,Accent=UseComponentColors?line.Accent:_textColor
-        }).ToArray();
-        ORows.Visibility = V(visibleLines.Length > 0);
-        if (OGraph.Visibility == Visibility.Visible) DrawGraph(f?.RecentFrameTimes);
+        Box.Child=canvas;
     }
-
     /// <summary>Frametimes recentes: picos para cima = engasgos.</summary>
     private void DrawGraph(IReadOnlyList<double>? ft)
     {

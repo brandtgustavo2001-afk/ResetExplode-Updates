@@ -1518,14 +1518,14 @@ public partial class MainWindow : Window
             }
             var lines=BuildOverlayLines(f);
             var rtssFrames=_settings.OverlayEngine=="Auto"?_rtss.GetFrames(game.Value.Pid):null;
-            if(rtssFrames is not null && _rtss.Publish(BuildRtssText(f,lines,game.Value.Name,rtssFrames))) {
+            if(rtssFrames is not null && _rtss.Publish(BuildRtssText(f,lines,game.Value.Name,rtssFrames,game.Value.Window))) {
                 _overlay.Hide();UpdateOverlayStatus(f);
                 OvStatus.Text=$"RTSS · {game.Value.Name} · {rtssFrames.Fps:0} FPS · {rtssFrames.FrameTimeMs:0.0} ms";
                 return;
             }
             _rtss.Clear();
             _overlay.TargetWindow = game.Value.Window;
-            _overlay.Update(f, lines, OvShow, OvShow.Contains("clock") ? DateTime.Now.ToString("HH:mm") : null, game.Value.Name);
+            _overlay.Update(f, lines, OvShow, OvShow.Contains("clock") ? DateTime.Now.ToString("HH:mm") : null, game.Value.Name,_overlayMetricValues);
             if (!_overlay.IsVisible) _overlay.Show();
             _overlay.KeepOnTop(); // o jogo pode ter passado na frente (janela sem borda "sempre no topo")
         }

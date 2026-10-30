@@ -30,6 +30,27 @@ if(args.FirstOrDefault()=="--game-live") {
 
 int passed=0;
 void Check(bool result,string name){if(!result)throw new Exception(name);Console.WriteLine("PASS: "+name);passed++;}
+var design=OverlayDesign.Normalize(new OverlayDesign {FpsFirst=true,Rows=new(){new(){Key="CPU",Label="Processador",Color="#112233",Size=150,Template="{label}: {value}"}}});
+var plan=OverlayLayout.Arrange(design,new[]{new OverlayTextRow("CPU","CPU","50%  60 C"),new OverlayTextRow("FPS","","120 FPS")},16,true,"#FFFFFF",false,(text,size)=>(text.Length*size/2,size));
+Check(plan.Rows[0].Key=="FPS" && plan.Rows[1].Text=="Processador: 50%  60 C","ordem FPS e rotulo personalizado");
+Check(plan.Rows[1].Color=="#112233" && plan.Rows[1].FontSize==24,"cor e tamanho por linha");
+var markup=OverlayLayout.Rtss(plan,"Consolas",16,true,1,"BR",20,30,1920,1080,"#000000",.5,true);
+Check(markup.Contains("<FNT=Consolas,-16,700,1>") && markup.Contains("<S=150><C=112233>"),"fonte e estilo emitidos para RTSS");
+Check(markup.Contains("<C=80000000><B=0,0>") && markup.Contains("<B=0,0,1>"),"fundo transparente e borda no RTSS");
+Check(markup.Contains($"<P={1920-plan.Width-20},{1080-plan.Height-30}>"),"canto inferior direito respeita dimensoes do jogo");
+design.FreeLayout=true;design.Rows.First(r=>r.Key=="CPU").X=250;
+var free=OverlayLayout.Arrange(design,new[]{new OverlayTextRow("CPU","CPU","60 C")},16,false,"#ABCDEF",false,(text,size)=>(100,20));
+Check(free.Rows[0].X==250 && free.Rows[0].Color=="#ABCDEF","posicao livre e cor unica");
+var corrupt=OverlayDesign.Normalize(new(){LineSpacing=double.NaN,Background="<bad>",GameAlias="<C=FF0000>\n",Rows=new(){new(){Key="CPU",Size=double.PositiveInfinity,Color="bad"}}});
+Check(corrupt.LineSpacing==3 && corrupt.Rows.First(r=>r.Key=="CPU").Size==100 && !corrupt.GameAlias.Contains('<'),"perfil invalido normalizado e tags externas removidas");
+Check(!OverlayDesign.IsFont("Arial,1><bad>") && OverlayDesign.IsFont("Segoe UI"),"fonte nao injeta comandos RTSS");
+var roundtrip=System.Text.Json.JsonSerializer.Deserialize<OverlayDesign>(System.Text.Json.JsonSerializer.Serialize(design));
+Check(roundtrip?.Rows.First(r=>r.Key=="CPU").Label=="Processador","perfil conserva personalizacao ao serializar");
+design.Rows.First(r=>r.Key=="CPU").Template="CPU {cpu_temp} | {cpu_load}";
+var custom=OverlayLayout.Arrange(design,new[]{new OverlayTextRow("CPU","CPU","unused",new Dictionary<string,string>{{"cpu_temp","60 C"},{"cpu_load","42%"}})},16,true,"#FFFFFF",false,(text,size)=>(100,20));
+Check(custom.Rows[0].Text=="CPU 60 C | 42%","metricas individuais podem ser reorganizadas no formato");
+design.Rows.First(r=>r.Key=="CPU").Template="";
+Check(OverlayLayout.Arrange(design,new[]{new OverlayTextRow("CPU","CPU","60 C")},16,true,"#FFFFFF",false,(text,size)=>(100,20)).Rows.Count==0,"formato vazio oculta a linha");
 var noGames=Array.Empty<LibGame>();var noManual=Array.Empty<string>();
 Check(GameDetection.IsGame("javaw",@"C:\Users\Test\curseforge\minecraft\runtime\bin\javaw.exe",noGames,noManual,"Minecraft* 1.21.1 - Singleplayer"),"Minecraft Java do CurseForge reconhecido");
 Check(GameDetection.IsGame("java",@"C:\Java\bin\java.exe",noGames,noManual,"Minecraft 1.21.1"),"Minecraft com Java externo reconhecido");

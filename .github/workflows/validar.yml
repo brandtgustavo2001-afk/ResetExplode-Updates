@@ -16,4 +16,5 @@ jobs:
       - run: dotnet run --project tests/StressPolicyTests.csproj -c Release
       - run: dotnet run --project tests/UpdaterTests.csproj -c Release
       - run: dotnet run --project tests/MonitoringTests.csproj -c Release
+      - run: dotnet run --project tests/OverlayPreview.csproj -c Release
       - run: dotnet build ResetExplode.csproj -c Release --nologo
