@@ -1,3 +1,5 @@
+0.16.15: corrige reconhecimento do Minecraft Java (incluindo CurseForge) e Bedrock. Outros aplicativos Java e o launcher nao recebem overlay por essa deteccao. A ativacao do overlay agora e salva entre reinicios; o modo Automatico abre o RTSS instalado quando necessario. O status explica quando esta usando janela e como habilitar RTSS para tela cheia. Mantidos sensores, protecao termica e atualizacoes assinadas.
+
 Monitoramento inspirado no fluxo MSI Afterburner + RTSS: integracao com o compartilhamento oficial de sensores do MSI e publicacao de OSD no RTSS, com fallback para o overlay em janela. Nova tabela de sensores MSI com atual/minimo/maximo e reset dos extremos, fonte de sensores opcional, modo de renderizacao e botao para abrir o RTSS instalado.
 
 O overlay em janela agora usa texto compacto, alinhamento, cores por componente e sombra. No RTSS, posicao/fonte/tamanho continuam sendo ajustados pelo proprio RivaTuner; as metricas, ordem e cores vem do ResetExplode. O RTSS precisa detectar o jogo e ter OSD habilitado. O grafico de frametime permanece no modo Janela.

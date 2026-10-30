@@ -8,5 +8,7 @@
     <Compile Include="MonitoringProgram.cs" />
     <Compile Include="../AfterburnerMonitor.cs" Link="AfterburnerMonitor.cs" />
     <Compile Include="../RtssOverlay.cs" Link="RtssOverlay.cs" />
+    <Compile Include="../GameDetection.cs" Link="GameDetection.cs" />
+    <Compile Include="../LibGame.cs" Link="LibGame.cs" />
   </ItemGroup>
 </Project>

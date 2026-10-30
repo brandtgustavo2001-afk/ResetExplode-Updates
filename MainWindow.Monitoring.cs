@@ -39,7 +39,19 @@ public partial class MainWindow
         _settings.OverlayEngine=OvEngine.SelectedIndex==1?"Window":"Auto";
         _settings.OverlayUseAfterburner=OvMsiSensors.IsChecked==true;
         _settings.Save();_rtss.Clear();_monitoringUiAt=0;
+        if (ChkOverlay.IsChecked == true) EnsureRtssStarted();
         RefreshMonitoringIntegration();UpdateOverlay();
+    }
+    private void EnsureRtssStarted()
+    {
+        if (_settings.OverlayEngine != "Auto") return;
+        var processes = Process.GetProcessesByName("RTSS");
+        try { if (processes.Length > 0) return; }
+        finally { foreach (var process in processes) process.Dispose(); }
+        string file=System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),"RivaTuner Statistics Server","RTSS.exe");
+        if (!System.IO.File.Exists(file)) return;
+        try { Process.Start(new ProcessStartInfo(file){UseShellExecute=true,WindowStyle=ProcessWindowStyle.Hidden}); }
+        catch(Exception ex) { AppDiagnostics.Log("Iniciar RTSS para overlay",ex); }
     }
     private void OvResetMsi_Click(object sender,RoutedEventArgs e){_afterburner.ResetExtrema();_monitoringUiAt=0;RefreshMonitoringIntegration();}
     private void OvOpenRtss_Click(object sender,RoutedEventArgs e)

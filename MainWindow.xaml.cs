@@ -676,6 +676,7 @@ public partial class MainWindow : Window
         BuildOverlayPicker();
         InitOverlayCustomization();
         _overlayReady = true;
+        ChkOverlay.IsChecked = _settings.OverlayEnabled;
         UpdateOverlayStatus(null);
     }
 
@@ -1442,8 +1443,13 @@ public partial class MainWindow : Window
 
     private void ChkOverlay_Changed(object sender, RoutedEventArgs e)
     {
+        if (!_overlayReady) return;
+        _settings.OverlayEnabled = ChkOverlay.IsChecked == true;
+        _settings.Save();
         if (ChkOverlay.IsChecked == true)
         {
+            AppDiagnostics.Log("Overlay ativado · modo " + _settings.OverlayEngine);
+            EnsureRtssStarted();
             EnsureFrames();
             _overlay ??= new OverlayWindow();
             ApplyOverlayOptions();
@@ -1456,6 +1462,7 @@ public partial class MainWindow : Window
 
         else
         {
+            AppDiagnostics.Log("Overlay desativado.");
             _overlayTimer?.Stop();
             _rtss.Clear();
             _overlay?.Hide();
@@ -1524,7 +1531,8 @@ public partial class MainWindow : Window
         }
         else { _rtss.Clear(); _overlay?.Hide(); }
         UpdateOverlayStatus(f);
-        if (game.HasValue && f == null) OvStatus.Text = $"Jogo detectado: {game.Value.Name} · sensores ativos; FPS indisponível neste modo/API.";
+        if (game.HasValue) OvStatus.Text = $"Jogo detectado: {game.Value.Name} · overlay em janela (use janela sem bordas). "
+            + (_settings.OverlayEngine == "Window" ? "Selecione Automático para usar o RTSS em tela cheia." : _rtss.Status);
     }
 
 

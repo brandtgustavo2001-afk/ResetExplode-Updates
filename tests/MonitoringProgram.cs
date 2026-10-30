@@ -13,9 +13,31 @@ if(args.FirstOrDefault()=="--rtss-live") {
     Console.WriteLine("PASS: slot do RTSS real publicado pelo SDK: "+publisher.Status);
     publisher.Clear();Console.WriteLine("PASS: slot real liberado sem alterar o MSI.");return;
 }
+if(args.FirstOrDefault()=="--game-live") {
+    var detector=new GameDetection();using var rtss=new RtssOverlay();
+    for(int i=0;i<20;i++) {
+        var game=detector.Foreground(Array.Empty<string>());
+        var frames=game.HasValue?rtss.GetFrames(game.Value.Pid):null;
+        Console.WriteLine(game.HasValue?$"Jogo: {game.Value.Name}, PID {game.Value.Pid}, RTSS: {frames?.Fps:0} FPS": "Aguardando jogo em primeiro plano.");
+        if(args.Contains("--show-osd")) {
+            if(game.HasValue && frames is not null) rtss.Publish($"<C=FFFF66>RESET EXPLODE  {frames.Fps:0} FPS  {frames.FrameTimeMs:0.0} ms<C>\nMinecraft - teste do overlay");
+            else rtss.Clear();
+        }
+        Thread.Sleep(1000);
+    }
+    return;
+}
 
 int passed=0;
 void Check(bool result,string name){if(!result)throw new Exception(name);Console.WriteLine("PASS: "+name);passed++;}
+var noGames=Array.Empty<LibGame>();var noManual=Array.Empty<string>();
+Check(GameDetection.IsGame("javaw",@"C:\Users\Test\curseforge\minecraft\runtime\bin\javaw.exe",noGames,noManual,"Minecraft* 1.21.1 - Singleplayer"),"Minecraft Java do CurseForge reconhecido");
+Check(GameDetection.IsGame("java",@"C:\Java\bin\java.exe",noGames,noManual,"Minecraft 1.21.1"),"Minecraft com Java externo reconhecido");
+Check(!GameDetection.IsGame("javaw",@"C:\Java\bin\javaw.exe",noGames,noManual,"Editor Java"),"outros programas Java nao sao jogos");
+Check(!GameDetection.IsGame("minecraft",@"C:\curseforge\minecraft\Install\minecraft.exe",noGames,noManual,"Minecraft Launcher"),"launcher do Minecraft nao recebe overlay");
+Check(!GameDetection.IsGame("chrome",null,noGames,noManual,"Minecraft 1.21.1"),"titulo Minecraft no navegador nao vira jogo");
+Check(GameDetection.IsGame("Minecraft.Windows",null,noGames,noManual,"Minecraft"),"Minecraft Bedrock reconhecido");
+Check(GameDetection.IsGame("TS4_x64",null,noGames,noManual),"deteccao do The Sims preservada");
 byte[] source=new byte[32+1324*3+1304];
 void U(int at,uint value)=>BitConverter.GetBytes(value).CopyTo(source,at);
 void Text(int at,string value)=>Encoding.Latin1.GetBytes(value).CopyTo(source,at);

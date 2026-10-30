@@ -79,6 +79,7 @@ public sealed class AppSettings
     public int OverlayStyleVersion { get; set; }
 
     // Overlay
+    public bool OverlayEnabled { get; set; }
     public string OverlayEngine { get; set; } = "Auto";
     public bool OverlayUseAfterburner { get; set; }
     public string OverlayCorner { get; set; } = "TL";

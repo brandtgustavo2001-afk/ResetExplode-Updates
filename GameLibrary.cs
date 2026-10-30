@@ -1,24 +1,9 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using Microsoft.Win32;
 
 namespace ResetExplode;
-
-/// <summary>Jogo instalado (de qualquer loja) ou adicionado à mão.</summary>
-public sealed class LibGame
-{
-    public string Store { get; init; } = "";
-    public string Id { get; init; } = "";
-    public string Name { get; init; } = "";
-    public string InstallDir { get; init; } = "";
-    public string? ExePath { get; set; }
-    public string? LaunchUri { get; init; }
-    public string Args { get; init; } = "";
-    public string Key => Store + ":" + Id;
-    public string Subtitle => Store;
-    public bool IsSteam => Store == "Steam";
-}
 
 /// <summary>Procura jogos instalados: Steam, Epic Games, GOG, Ubisoft Connect e os adicionados manualmente. Só lê arquivos e registro.</summary>
 public static class GameLibrary
