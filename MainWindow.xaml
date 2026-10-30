@@ -1658,7 +1658,7 @@
                                     <StackPanel Margin="0,0,24,12"><TextBlock Text="Fonte instalada"/><ComboBox x:Name="OvFont" IsEditable="True" Width="170"><ComboBoxItem Content="Consolas" IsSelected="True"/><ComboBoxItem Content="Cascadia Mono"/><ComboBoxItem Content="Segoe UI"/><ComboBoxItem Content="Arial"/><ComboBoxItem Content="Tahoma"/><ComboBoxItem Content="Unispace"/></ComboBox></StackPanel>
                                     <StackPanel Margin="0,0,24,12"><TextBlock Text="Tamanho da fonte"/><Slider x:Name="OvFontSize" Minimum="9" Maximum="26" Value="12" Width="140" TickFrequency="1" IsSnapToTickEnabled="True"/></StackPanel>
 
-                                    <StackPanel Margin="0,0,24,12"><TextBlock Text="Opacidade do fundo"/><Slider x:Name="OvOpacity" Minimum="0" Maximum="100" Value="78" Width="140" ValueChanged="OvOpacity_Changed"/><CheckBox x:Name="OvTransparent" Content="Fundo transparente" Checked="OvTransparent_Changed" Unchecked="OvTransparent_Changed" Margin="0,8,0,0"/></StackPanel>
+                                    <StackPanel Margin="0,0,24,12"><TextBlock Text="Opacidade do fundo"/><Slider x:Name="OvOpacity" Minimum="0" Maximum="100" Value="78" Width="140"/><CheckBox x:Name="OvTransparent" Content="Fundo transparente" Checked="OvTransparent_Changed" Unchecked="OvTransparent_Changed" Margin="0,8,0,0"/></StackPanel>
                                 </WrapPanel>
                                                                 <WrapPanel Margin="0,0,0,12"><CheckBox x:Name="OvBorder" Content="Borda" IsChecked="True" Margin="0,0,24,0"/><CheckBox x:Name="OvBigFps" Content="FPS em destaque" IsChecked="True"/></WrapPanel>
                                 <WrapPanel Margin="0,0,0,12">

@@ -32,6 +32,7 @@ public partial class MainWindow
     private void InitLiveOverlayControls()
     {
         if(_liveAppearanceWired)return;_liveAppearanceWired=true;
+        OvOpacity.ValueChanged+=OvOpacity_Changed;
         _liveAppearanceTimer=new DispatcherTimer {Interval=TimeSpan.FromMilliseconds(150)};
         _liveAppearanceTimer.Tick+=(_,_)=> {
             _liveAppearanceTimer.Stop();if(!_overlayReady||_closed)return;
