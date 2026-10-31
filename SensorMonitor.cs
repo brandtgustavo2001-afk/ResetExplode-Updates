@@ -16,6 +16,9 @@ public sealed class SensorMonitor : IDisposable
         SensorType Type, HardwareType HardwareType, float? Value, float? Min, float? Max);
     private readonly Dictionary<string, Reading> _readings = new();
     public string? LastError { get; private set; }
+    public DateTimeOffset? LastRefreshUtc { get; private set; }
+    public bool IsFresh => LastRefreshUtc is DateTimeOffset at &&
+                           (DateTimeOffset.UtcNow - at).TotalSeconds <= 5;
 
     public ObservableCollection<SensorRow> Rows { get; } = new();
     public bool IsOpen => _open;
@@ -74,6 +77,7 @@ public sealed class SensorMonitor : IDisposable
             }
             row.Update(reading.Value, reading.Min, reading.Max);
         }
+        if (IsOpen) LastRefreshUtc = DateTimeOffset.UtcNow;
     }
 
     private void WalkSafe(IHardware hw)
@@ -128,6 +132,10 @@ public sealed class SensorMonitor : IDisposable
     public float? CpuPower => Rows.FirstOrDefault(r => r.HardwareType == HardwareType.Cpu
                                                     && r.Type == SensorType.Power
                                                     && r.Name.Contains("Package"))?.RawValue;
+    public string CpuPowerSource => Rows.FirstOrDefault(r => r.HardwareType == HardwareType.Cpu
+                                                          && r.Type == SensorType.Power
+                                                          && r.Name.Contains("Package"))?.Name
+                                    ?? "Sem sensor de consumo disponível";
 
     /// <summary>
     /// Driver PawnIO (necessário para temperatura/consumo da CPU via MSR/SMN).
@@ -157,6 +165,7 @@ public sealed class SensorMonitor : IDisposable
     /// <summary>Por que a temperatura/consumo da CPU não aparecem (o motivo mais provável primeiro).</summary>
     public CpuSensorProblem DiagnoseCpuSensors()
     {
+        if (!IsFresh) return CpuSensorProblem.ReadFailed;
         if (CpuTemperature != null) return CpuSensorProblem.None;
         if (!IsElevated) return CpuSensorProblem.NotElevated;
         if (!IsPawnIOInstalled) return CpuSensorProblem.PawnIOMissing;

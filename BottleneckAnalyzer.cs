@@ -9,6 +9,9 @@ public sealed record LoadSample(
     float? GpuLoad, float? CpuTotal, float? CpuMaxCore, string? BusiestCore,
     double? VramPct, float? RamPct, float? GpuTemp, float? CpuTemp, bool GpuThermalCap, double? Fps)
 {
+    /// <summary>Eventos de frame recentes do PresentMon/RTSS usados pelo benchmark de jogo.</summary>
+    public IReadOnlyList<double> FrameTimes { get; init; } = Array.Empty<double>();
+
     /// <summary>
     /// Regras (na ordem): VRAM cheia → térmico → GPU ≥ 90% (normal em jogo pesado) → CPU/núcleo ≥ 85% com GPU sobrando →
     /// RAM cheia → nada no limite (trava de FPS, V-Sync ou menu).
@@ -57,7 +60,10 @@ public static class BottleneckAnalyzer
         float? ram = rows.FirstOrDefault(r => r.HardwareType == HardwareType.Memory && r.Type == SensorType.Load && r.Name == "Memory")?.RawValue;
 
         return new LoadSample(gpuLoad, m.CpuLoad, busiest?.RawValue, busiest?.Name.Replace("CPU Core #", "núcleo "),
-                              vramPct, ram, gpuTemp, m.CpuTemperature, thermal, frames?.Fps);
+                              vramPct, ram, gpuTemp, m.CpuTemperature, thermal, frames?.Fps)
+        {
+            FrameTimes = frames?.RecentFrameTimes ?? Array.Empty<double>()
+        };
     }
 
     public static string Title(Limiter l) => l switch
@@ -106,12 +112,21 @@ public static class BottleneckAnalyzer
 public sealed class BottleneckSession
 {
     private readonly List<(LoadSample Sample, Limiter Limiter)> _samples = new();
+    private readonly List<double> _frameTimes = new();
     public DateTime Start { get; } = DateTime.Now;
     public TimeSpan Duration { get; init; }
     public int Count => _samples.Count;
     public bool Done => DateTime.Now - Start >= Duration;
 
-    public void Add(LoadSample s) => _samples.Add((s, s.Classify()));
+    public void Add(LoadSample s)
+    {
+        _samples.Add((s, s.Classify()));
+        if (s.FrameTimes.Count > 0)
+        {
+            _frameTimes.AddRange(s.FrameTimes.Where(t => double.IsFinite(t) && t > 0 && t < 10_000));
+            if (_frameTimes.Count > 200_000) _frameTimes.RemoveRange(0, _frameTimes.Count - 200_000);
+        }
+    }
 
     public IReadOnlyList<(Limiter Limiter, double Pct)> Distribution() =>
         _samples.GroupBy(x => x.Limiter)
@@ -129,6 +144,27 @@ public sealed class BottleneckSession
         }
     }
 
+    public double? MinFps => FpsValues().Count is > 0 ? FpsValues().Min() : null;
+    public double? MaxFps => FpsValues().Count is > 0 ? FpsValues().Max() : null;
+    public double? AvgFrameTimeMs => _frameTimes.Count > 0 ? _frameTimes.Average() : null;
+    public double? Low1Fps => LowFps(0.99);
+    public double? Low01Fps => LowFps(0.999);
+
+    public GameBenchmarkResult? Result => _samples.Count == 0 ? null :
+        new GameBenchmarkResult(AvgFps, MinFps, MaxFps, Low1Fps, Low01Fps, AvgFrameTimeMs, _samples.Count,
+                                DateTime.Now - Start);
+
+    private List<double> FpsValues() => _samples.Where(x => x.Sample.Fps is > 0)
+                                                 .Select(x => x.Sample.Fps!.Value).ToList();
+
+    private double? LowFps(double percentile)
+    {
+        if (_frameTimes.Count == 0) return null;
+        var sorted = _frameTimes.OrderBy(x => x).ToArray();
+        int index = (int)Math.Clamp(Math.Floor((sorted.Length - 1) * percentile), 0, sorted.Length - 1);
+        return sorted[index] > 0 ? 1000 / sorted[index] : null;
+    }
+
     public double? Avg(Func<LoadSample, float?> sel)
     {
         var v = _samples.Select(x => sel(x.Sample)).Where(x => x != null).Select(x => (double)x!.Value).ToList();
@@ -141,3 +177,7 @@ public sealed class BottleneckSession
         return v.Count > 0 ? v.Max() : null;
     }
 }
+
+public sealed record GameBenchmarkResult(
+    double? AvgFps, double? MinFps, double? MaxFps, double? Low1Fps, double? Low01Fps,
+    double? AvgFrameTimeMs, int Samples, TimeSpan Duration);

@@ -87,6 +87,7 @@ public partial class MainWindow : Window
         SideVersion.Text = "v" + typeof(MainWindow).Assembly.GetName().Version?.ToString(3);
         InitUpdates();
         InitEnergyUsage();
+        InitPerformanceHistory();
         InitBackgroundMode();
         InitMonitoringIntegration();
         // Respeitar a área útil em notebooks e monitores com escala de DPI alta.
@@ -173,6 +174,7 @@ public partial class MainWindow : Window
             _closed = true;
             _timer.Stop(); _overlayTimer?.Stop();
             _usbDebounce?.Stop();
+            SavePerformanceHistory();
             PauseAfterError();
             AppDiagnostics.TryCleanup("Fechar overlay", () => _overlay?.Close());
             AppDiagnostics.TryCleanup("Fechar notificação", () => _toast?.Close());
@@ -765,6 +767,11 @@ public partial class MainWindow : Window
         BnResultTitle.Text = $"Resultado: {BottleneckAnalyzer.Title(main)}";
         var parts = new List<string>();
         if (sess.AvgFps is double fps) parts.Add($"FPS médio {fps:0}");
+        if (sess.MinFps is double min) parts.Add($"mín. {min:0}");
+        if (sess.MaxFps is double max) parts.Add($"máx. {max:0}");
+        if (sess.Low1Fps is double low1) parts.Add($"1% low {low1:0}");
+        if (sess.Low01Fps is double low01) parts.Add($"0,1% low {low01:0}");
+        if (sess.AvgFrameTimeMs is double frameTime) parts.Add($"frametime {frameTime:0.0} ms");
         if (sess.Avg(x => x.GpuLoad) is double g) parts.Add($"GPU média {g:0} %");
         if (sess.Avg(x => x.CpuTotal) is double c) parts.Add($"CPU média {c:0} %");
         if (sess.Avg(x => x.CpuMaxCore) is double k) parts.Add($"núcleo mais ocupado {k:0} %");
@@ -774,6 +781,8 @@ public partial class MainWindow : Window
         BnDistribution.ItemsSource = sess.Distribution()
             .Select(d => new MeterItem($"{BottleneckAnalyzer.Title(d.Limiter)} — % do tempo", $"{d.Pct:0} %", d.Pct / 100)).ToList();
         BnResultAdvice.Text = BottleneckAnalyzer.Advice(main);
+        if (sess.Result is { AvgFps: double average })
+            SaveBenchRecord("game", average, string.Join(" · ", parts.Take(6)));
         BnResult.Visibility = Visibility.Visible;
     }
 

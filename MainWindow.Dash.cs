@@ -27,6 +27,26 @@ public partial class MainWindow
     private readonly List<DashEvent> _events = new();
     private List<DashCheck> _health = new();
     private DateTime _healthAt = DateTime.MinValue;
+    private readonly List<PerformanceSample> _performanceHistory = new();
+    private PerformanceHistoryStore? _performanceStore;
+    private DateTime _lastPerformanceSample = DateTime.MinValue;
+    private DateTime _lastPerformanceSave = DateTime.MinValue;
+    private int _performanceSaveBusy;
+
+    private void InitPerformanceHistory()
+    {
+        string path = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "ResetExplode", "performance-history.json");
+        _performanceStore = new PerformanceHistoryStore(path);
+        _performanceHistory.AddRange(_performanceStore.Load());
+        DashHistoryStatus.Text = _performanceHistory.Count == 0
+            ? "Histórico local: a primeira amostra será salva durante o monitoramento."
+            : $"Histórico local: {_performanceHistory.Count:N0} amostras carregadas.";
+        foreach (var sample in _performanceHistory.TakeLast(DashMax))
+            _dash.Add(new DashSample(sample.CpuTemperature, sample.GpuTemperature, sample.CpuLoad,
+                                      sample.GpuLoad, sample.CpuPower, sample.GpuPower));
+    }
 
     // ---------------- coleta (a cada segundo, mesmo com a página fechada) ----------------
 
@@ -42,9 +62,35 @@ public partial class MainWindow
 
     private void CollectDashSample()
     {
-        _dash.Add(new DashSample(_monitor.CpuTemperature, MainGpuTemp(), _monitor.CpuLoad, MainGpuLoad(), _monitor.CpuPower, MainGpuPower()));
+        float? gpuTemp = MainGpuTemp(), gpuLoad = MainGpuLoad(), gpuPower = MainGpuPower();
+        var dash = new DashSample(_monitor.CpuTemperature, gpuTemp, _monitor.CpuLoad, gpuLoad, _monitor.CpuPower, gpuPower);
+        _dash.Add(dash);
         if (_dash.Count > DashMax) _dash.RemoveAt(0);
+        if ((DateTime.Now - _lastPerformanceSample).TotalSeconds >= 10)
+        {
+            _lastPerformanceSample = DateTime.Now;
+            var frames = _frames.Running ? _frames.GetForegroundStats() : null;
+            _performanceHistory.Add(new PerformanceSample(DateTime.Now, dash.CpuT, dash.CpuL, dash.CpuW,
+                dash.GpuT, dash.GpuL, dash.GpuW, frames?.Fps, frames?.FrameTimeMs, frames?.ProcessName ?? _lastOverlayGame));
+            if (_performanceHistory.Count > PerformanceHistoryStore.MaxSamples)
+                _performanceHistory.RemoveRange(0, _performanceHistory.Count - PerformanceHistoryStore.MaxSamples);
+            DashHistoryStatus.Text = $"Histórico local: {_performanceHistory.Count:N0} amostras · salva a cada 30 s.";
+            if ((DateTime.Now - _lastPerformanceSave).TotalSeconds >= 30) SavePerformanceHistory();
+        }
         if (PageDash.IsVisible) UpdateDashboard(full: false);
+    }
+
+    private void SavePerformanceHistory()
+    {
+        if (_performanceStore == null || Interlocked.Exchange(ref _performanceSaveBusy, 1) != 0) return;
+        _lastPerformanceSave = DateTime.Now;
+        var snapshot = _performanceHistory.ToArray();
+        _ = Task.Run(() =>
+        {
+            try { _performanceStore.Save(snapshot); }
+            catch (Exception ex) { AppDiagnostics.Log("Salvar histórico de desempenho", ex); }
+            finally { Interlocked.Exchange(ref _performanceSaveBusy, 0); }
+        });
     }
 
     // ---------------- eventos recentes ----------------
@@ -73,6 +119,7 @@ public partial class MainWindow
                 "mem" => ("", "Memória e carregamento"),
                 "oc" => ("", "Verificação de estabilidade"),
                 "disk" => ("", "Benchmark de disco"),
+                "game" => ("", "Benchmark de jogo"),
                 _ => ("", r.Test)
             };
             string first = r.Summary.Split('·')[0].Trim();
@@ -168,6 +215,7 @@ public partial class MainWindow
             new KeyValuePair<string, string>("Render single-core", single is double s ? $"{s:N0} pts" : "—"),
             new KeyValuePair<string, string>("Cena de jogo (GPU)", Last("gpu")),
             new KeyValuePair<string, string>("Simulação de jogo", Last("sim")),
+            new KeyValuePair<string, string>("Benchmark de jogo", Last("game")),
         };
         DashCpuName.Text = GameCatalog.ShortCpuName(_cpuName);
         DashGpuName.Text = _gpus.Count > 0 ? GameCatalog.ShortGpuName(_gpus[0].Name) : "—";
@@ -336,7 +384,8 @@ public partial class MainWindow
     private bool _healthBusy;
     private async void UpdateDashHealth()
     {
-        if (_healthBusy || _closed || (DateTime.Now - _healthAt).TotalSeconds < 60) return;
+        // Se a primeira execução ocorreu antes dos sensores abrirem, repetir assim que eles ficarem disponíveis.
+        if (_healthBusy || _closed || (_monitor.IsOpen && (DateTime.Now - _healthAt).TotalSeconds < 60)) return;
         _healthBusy = true;
         try
         {
@@ -376,12 +425,25 @@ public partial class MainWindow
         {
             var sensors = _monitor.DiagnoseCpuSensors();
             list.Insert(0, Item(sensors == SensorMonitor.CpuSensorProblem.None, "Sensores da CPU",
-                "Temperatura e consumo disponíveis.", SensorMonitor.Explain(sensors).Split('.')[0] + "."));
+                $"Temperatura: {_monitor.CpuTemperatureSource}; consumo: {_monitor.CpuPowerSource}.",
+                SensorMonitor.Explain(sensors).Split('.')[0] + "."));
         }
+        var sensorProblem = _monitor.IsOpen ? _monitor.DiagnoseCpuSensors() : SensorMonitor.CpuSensorProblem.ReadFailed;
+        var drive = _drives.FirstOrDefault(d => d.Letter.StartsWith("C", StringComparison.OrdinalIgnoreCase));
+        var report = PcHealthReport.FromReadings(_monitor.CpuTemperature, MainGpuTemp(),
+            _monitor.Rows.FirstOrDefault(r => r.HardwareType == HardwareType.Memory &&
+                                              r.Type == SensorType.Load && r.Name == "Memory")?.RawValue,
+            drive is null ? null : (float)(drive.UsedFraction * 100),
+            sensorProblem == SensorMonitor.CpuSensorProblem.None, errs.Total);
+        _healthReport = report;
+        DashHealthScore.Text = $"{report.Score}/100";
+        DashHealthSummary.Text = report.Score >= 80 ? "Tudo normal" : report.Score >= 60 ? "Requer atenção" : "Há problemas para revisar";
         _health = list;
         DashHealth.ItemsSource = _health;
         }
         catch (Exception ex) { AppDiagnostics.Log("Saúde do PC", ex); }
         finally { _healthBusy = false; }
     }
+
+    private PcHealthReport _healthReport = new(DateTime.Now, 0, Array.Empty<HealthCheck>());
 }

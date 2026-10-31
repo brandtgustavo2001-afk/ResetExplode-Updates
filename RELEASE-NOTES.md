@@ -1,3 +1,5 @@
+0.16.21: cinco melhorias de monitoramento: diagnóstico automático com nota de saúde do PC e origem dos sensores; histórico local de temperatura, carga, consumo, FPS e frametime, carregado no gráfico da visão geral; sessão de benchmark de jogo com FPS médio/mínimo/máximo, 1% low, 0,1% low e frametime; resultado salvo no histórico de benchmarks; overlay e sensores existentes continuam atualizados em tempo real com configuração personalizada.
+
 0.16.20: nomes de componentes e textos informativos podem ser copiados com botao direito > Copiar texto. Copia o nome completo mesmo quando aparece cortado, incluindo textos formatados. Campos editaveis mantem a copia nativa. Inclui a opcao Fundo transparente da 0.16.19.
 
 0.16.18: selecao de indicadores simplificada em botoes de ligar/desligar para FPS, placa de video, processador, RAM, memoria de video e nome do jogo. A lista detalhada fica em uma secao avancada fechada. Inclui toda a edicao ao vivo e continuidade no Alt+Tab da 0.16.17.
